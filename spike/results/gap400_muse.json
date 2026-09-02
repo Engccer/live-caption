@@ -1,0 +1,1258 @@
+{
+  "provider": "muse",
+  "audio": "fixture_ko_3spk.wav",
+  "sample_rate": 24000,
+  "audio_ms": 63320,
+  "wall_s": 64.1,
+  "events": [
+    {
+      "t_ms": 0.0,
+      "kind": "handshake_sent"
+    },
+    {
+      "t_ms": 969.0,
+      "kind": "session",
+      "text": null,
+      "final": null,
+      "speaker": null,
+      "turn": null,
+      "audio_ms": null,
+      "error": null
+    },
+    {
+      "t_ms": 1234.0,
+      "kind": "speechStart",
+      "text": null,
+      "final": null,
+      "speaker": null,
+      "turn": 0,
+      "audio_ms": 300,
+      "error": null
+    },
+    {
+      "t_ms": 1234.0,
+      "kind": "transcript",
+      "text": " 네",
+      "final": false,
+      "speaker": null,
+      "turn": null,
+      "audio_ms": 800,
+      "error": null
+    },
+    {
+      "t_ms": 1594.0,
+      "kind": "transcript",
+      "text": " 네 그럼",
+      "final": false,
+      "speaker": null,
+      "turn": null,
+      "audio_ms": 1440,
+      "error": null
+    },
+    {
+      "t_ms": 2406.0,
+      "kind": "transcript",
+      "text": " 네 그럼 2학기",
+      "final": false,
+      "speaker": null,
+      "turn": null,
+      "audio_ms": 2240,
+      "error": null
+    },
+    {
+      "t_ms": 3109.0,
+      "kind": "transcript",
+      "text": " 네 그럼 2학기 영어과",
+      "final": false,
+      "speaker": null,
+      "turn": null,
+      "audio_ms": 2960,
+      "error": null
+    },
+    {
+      "t_ms": 3688.0,
+      "kind": "transcript",
+      "text": " 네 그럼 2학기 영어과 평가",
+      "final": false,
+      "speaker": null,
+      "turn": null,
+      "audio_ms": 3520,
+      "error": null
+    },
+    {
+      "t_ms": 3813.0,
+      "kind": "transcript",
+      "text": " 네 그럼 2학기 영어과 평가 계획",
+      "final": false,
+      "speaker": null,
+      "turn": null,
+      "audio_ms": 3680,
+      "error": null
+    },
+    {
+      "t_ms": 4234.0,
+      "kind": "transcript",
+      "text": " 네 그럼 2학기 영어과 평가 계획 회의를",
+      "final": false,
+      "speaker": null,
+      "turn": null,
+      "audio_ms": 4080,
+      "error": null
+    },
+    {
+      "t_ms": 5031.0,
+      "kind": "transcript",
+      "text": " 네 그럼 2학기 영어과 평가 계획 회의를 시작하겠습니다",
+      "final": false,
+      "speaker": null,
+      "turn": null,
+      "audio_ms": 4880,
+      "error": null
+    },
+    {
+      "t_ms": 6328.0,
+      "kind": "transcript",
+      "text": " 네 그럼 2학기 영어과 평가 계획 회의를 시작하겠습니다 지난번에",
+      "final": false,
+      "speaker": null,
+      "turn": null,
+      "audio_ms": 6160,
+      "error": null
+    },
+    {
+      "t_ms": 7266.0,
+      "kind": "transcript",
+      "text": " 네 그럼 2학기 영어과 평가 계획 회의를 시작하겠습니다 지난번에 수행평가",
+      "final": false,
+      "speaker": null,
+      "turn": null,
+      "audio_ms": 7120,
+      "error": null
+    },
+    {
+      "t_ms": 7750.0,
+      "kind": "transcript",
+      "text": " 네 그럼 2학기 영어과 평가 계획 회의를 시작하겠습니다 지난번에 수행평가 비중을",
+      "final": false,
+      "speaker": null,
+      "turn": null,
+      "audio_ms": 7600,
+      "error": null
+    },
+    {
+      "t_ms": 8453.0,
+      "kind": "transcript",
+      "text": " 네 그럼 2학기 영어과 평가 계획 회의를 시작하겠습니다 지난번에 수행평가 비중을 사십",
+      "final": false,
+      "speaker": null,
+      "turn": null,
+      "audio_ms": 8320,
+      "error": null
+    },
+    {
+      "t_ms": 8641.0,
+      "kind": "transcript",
+      "text": " 네 그럼 2학기 영어과 평가 계획 회의를 시작하겠습니다 지난번에 수행평가 비중을 사십 퍼센트로",
+      "final": false,
+      "speaker": null,
+      "turn": null,
+      "audio_ms": 8480,
+      "error": null
+    },
+    {
+      "t_ms": 9516.0,
+      "kind": "transcript",
+      "text": " 네 그럼 2학기 영어과 평가 계획 회의를 시작하겠습니다 지난번에 수행평가 비중을 사십 퍼센트로 올리자고",
+      "final": false,
+      "speaker": null,
+      "turn": null,
+      "audio_ms": 9360,
+      "error": null
+    },
+    {
+      "t_ms": 9844.0,
+      "kind": "transcript",
+      "text": " 네 그럼 2학기 영어과 평가 계획 회의를 시작하겠습니다 지난번에 수행평가 비중을 사십 퍼센트로 올리자고 하셨는데",
+      "final": false,
+      "speaker": null,
+      "turn": null,
+      "audio_ms": 9680,
+      "error": null
+    },
+    {
+      "t_ms": 10813.0,
+      "kind": "transcript",
+      "text": " 네 그럼 2학기 영어과 평가 계획 회의를 시작하겠습니다 지난번에 수행평가 비중을 사십 퍼센트로 올리자고 하셨는데 그대로",
+      "final": false,
+      "speaker": null,
+      "turn": null,
+      "audio_ms": 10640,
+      "error": null
+    },
+    {
+      "t_ms": 11500.0,
+      "kind": "transcript",
+      "text": " 네 그럼 2학기 영어과 평가 계획 회의를 시작하겠습니다 지난번에 수행평가 비중을 사십 퍼센트로 올리자고 하셨는데 그대로 갈까요?",
+      "final": false,
+      "speaker": null,
+      "turn": null,
+      "audio_ms": 11360,
+      "error": null
+    },
+    {
+      "t_ms": 12719.0,
+      "kind": "transcript",
+      "text": " 네 그럼 2학기 영어과 평가 계획 회의를 시작하겠습니다 지난번에 수행평가 비중을 사십 퍼센트로 올리자고 하셨는데 그대로 갈까요? 저는",
+      "final": false,
+      "speaker": null,
+      "turn": null,
+      "audio_ms": 12560,
+      "error": null
+    },
+    {
+      "t_ms": 13172.0,
+      "kind": "transcript",
+      "text": " 네 그럼 2학기 영어과 평가 계획 회의를 시작하겠습니다 지난번에 수행평가 비중을 사십 퍼센트로 올리자고 하셨는데 그대로 갈까요? 저는 조금",
+      "final": false,
+      "speaker": null,
+      "turn": null,
+      "audio_ms": 13040,
+      "error": null
+    },
+    {
+      "t_ms": 14141.0,
+      "kind": "transcript",
+      "text": " 네 그럼 2학기 영어과 평가 계획 회의를 시작하겠습니다 지난번에 수행평가 비중을 사십 퍼센트로 올리자고 하셨는데 그대로 갈까요? 저는 조금 조심스럽습니다",
+      "final": false,
+      "speaker": null,
+      "turn": null,
+      "audio_ms": 14000,
+      "error": null
+    },
+    {
+      "t_ms": 15109.0,
+      "kind": "transcript",
+      "text": " 네 그럼 2학기 영어과 평가 계획 회의를 시작하겠습니다 지난번에 수행평가 비중을 사십 퍼센트로 올리자고 하셨는데 그대로 갈까요? 저는 조금 조심스럽습니다 학생들",
+      "final": false,
+      "speaker": null,
+      "turn": null,
+      "audio_ms": 14960,
+      "error": null
+    },
+    {
+      "t_ms": 15688.0,
+      "kind": "transcript",
+      "text": " 네 그럼 2학기 영어과 평가 계획 회의를 시작하겠습니다 지난번에 수행평가 비중을 사십 퍼센트로 올리자고 하셨는데 그대로 갈까요? 저는 조금 조심스럽습니다 학생들 부담이",
+      "final": false,
+      "speaker": null,
+      "turn": null,
+      "audio_ms": 15520,
+      "error": null
+    },
+    {
+      "t_ms": 16328.0,
+      "kind": "transcript",
+      "text": " 네 그럼 2학기 영어과 평가 계획 회의를 시작하겠습니다 지난번에 수행평가 비중을 사십 퍼센트로 올리자고 하셨는데 그대로 갈까요? 저는 조금 조심스럽습니다 학생들 부담이 커질 것",
+      "final": false,
+      "speaker": null,
+      "turn": null,
+      "audio_ms": 16160,
+      "error": null
+    },
+    {
+      "t_ms": 16734.0,
+      "kind": "transcript",
+      "text": " 네 그럼 2학기 영어과 평가 계획 회의를 시작하겠습니다 지난번에 수행평가 비중을 사십 퍼센트로 올리자고 하셨는데 그대로 갈까요? 저는 조금 조심스럽습니다 학생들 부담이 커질 것 같아서요",
+      "final": false,
+      "speaker": null,
+      "turn": null,
+      "audio_ms": 16560,
+      "error": null
+    },
+    {
+      "t_ms": 17781.0,
+      "kind": "transcript",
+      "text": " 네 그럼 2학기 영어과 평가 계획 회의를 시작하겠습니다 지난번에 수행평가 비중을 사십 퍼센트로 올리자고 하셨는데 그대로 갈까요? 저는 조금 조심스럽습니다 학생들 부담이 커질 것 같아서요 ",
+      "final": false,
+      "speaker": null,
+      "turn": null,
+      "audio_ms": 17600,
+      "error": null
+    },
+    {
+      "t_ms": 17781.0,
+      "kind": "speaker",
+      "text": null,
+      "final": null,
+      "speaker": "A",
+      "turn": null,
+      "audio_ms": 17600,
+      "error": null
+    },
+    {
+      "t_ms": 17781.0,
+      "kind": "speechEnd",
+      "text": null,
+      "final": null,
+      "speaker": null,
+      "turn": 0,
+      "audio_ms": 17100,
+      "error": null
+    },
+    {
+      "t_ms": 17781.0,
+      "kind": "speechComplete",
+      "text": " 네 그럼 2학기 영어과 평가 계획 회의를 시작하겠습니다 지난번에 수행평가 비중을 사십 퍼센트로 올리자고 하셨는데 그대로 갈까요? 저는 조금 조심스럽습니다 학생들 부담이 커질 것 같아서요 ",
+      "final": null,
+      "speaker": null,
+      "turn": 0,
+      "audio_ms": 17100,
+      "error": null
+    },
+    {
+      "t_ms": 18078.0,
+      "kind": "speechStart",
+      "text": null,
+      "final": null,
+      "speaker": null,
+      "turn": 1,
+      "audio_ms": 17420,
+      "error": null
+    },
+    {
+      "t_ms": 18078.0,
+      "kind": "transcript",
+      "text": " 그",
+      "final": false,
+      "speaker": null,
+      "turn": null,
+      "audio_ms": 17920,
+      "error": null
+    },
+    {
+      "t_ms": 18234.0,
+      "kind": "transcript",
+      "text": " 그 부분은",
+      "final": false,
+      "speaker": null,
+      "turn": null,
+      "audio_ms": 18080,
+      "error": null
+    },
+    {
+      "t_ms": 18719.0,
+      "kind": "transcript",
+      "text": " 그 부분은 저도",
+      "final": false,
+      "speaker": null,
+      "turn": null,
+      "audio_ms": 18560,
+      "error": null
+    },
+    {
+      "t_ms": 19688.0,
+      "kind": "transcript",
+      "text": " 그 부분은 저도 고민했습니다",
+      "final": false,
+      "speaker": null,
+      "turn": null,
+      "audio_ms": 19520,
+      "error": null
+    },
+    {
+      "t_ms": 21016.0,
+      "kind": "transcript",
+      "text": " 그 부분은 저도 고민했습니다 대신",
+      "final": false,
+      "speaker": null,
+      "turn": null,
+      "audio_ms": 20880,
+      "error": null
+    },
+    {
+      "t_ms": 21859.0,
+      "kind": "transcript",
+      "text": " 그 부분은 저도 고민했습니다 대신 집필",
+      "final": false,
+      "speaker": null,
+      "turn": null,
+      "audio_ms": 21600,
+      "error": null
+    },
+    {
+      "t_ms": 22266.0,
+      "kind": "transcript",
+      "text": " 그 부분은 저도 고민했습니다 대신 집필 평가를 한",
+      "final": false,
+      "speaker": null,
+      "turn": null,
+      "audio_ms": 22080,
+      "error": null
+    },
+    {
+      "t_ms": 22766.0,
+      "kind": "transcript",
+      "text": " 그 부분은 저도 고민했습니다 대신 집필 평가를 한 번",
+      "final": false,
+      "speaker": null,
+      "turn": null,
+      "audio_ms": 22560,
+      "error": null
+    },
+    {
+      "t_ms": 23063.0,
+      "kind": "transcript",
+      "text": " 그 부분은 저도 고민했습니다 대신 집필 평가를 한 번 줄이면",
+      "final": false,
+      "speaker": null,
+      "turn": null,
+      "audio_ms": 22880,
+      "error": null
+    },
+    {
+      "t_ms": 23719.0,
+      "kind": "transcript",
+      "text": " 그 부분은 저도 고민했습니다 대신 집필 평가를 한 번 줄이면 어떨까요?",
+      "final": false,
+      "speaker": null,
+      "turn": null,
+      "audio_ms": 23520,
+      "error": null
+    },
+    {
+      "t_ms": 24734.0,
+      "kind": "transcript",
+      "text": " 그 부분은 저도 고민했습니다 대신 집필 평가를 한 번 줄이면 어떨까요? ",
+      "final": false,
+      "speaker": null,
+      "turn": null,
+      "audio_ms": 24560,
+      "error": null
+    },
+    {
+      "t_ms": 24734.0,
+      "kind": "speaker",
+      "text": null,
+      "final": null,
+      "speaker": "B",
+      "turn": null,
+      "audio_ms": 24560,
+      "error": null
+    },
+    {
+      "t_ms": 24734.0,
+      "kind": "speechEnd",
+      "text": null,
+      "final": null,
+      "speaker": null,
+      "turn": 1,
+      "audio_ms": 24060,
+      "error": null
+    },
+    {
+      "t_ms": 24734.0,
+      "kind": "speechComplete",
+      "text": " 그 부분은 저도 고민했습니다 대신 집필 평가를 한 번 줄이면 어떨까요? ",
+      "final": null,
+      "speaker": null,
+      "turn": 1,
+      "audio_ms": 24060,
+      "error": null
+    },
+    {
+      "t_ms": 24797.0,
+      "kind": "speechStart",
+      "text": null,
+      "final": null,
+      "speaker": null,
+      "turn": 2,
+      "audio_ms": 24140,
+      "error": null
+    },
+    {
+      "t_ms": 25438.0,
+      "kind": "transcript",
+      "text": " 그러면",
+      "final": false,
+      "speaker": null,
+      "turn": null,
+      "audio_ms": 25280,
+      "error": null
+    },
+    {
+      "t_ms": 26047.0,
+      "kind": "transcript",
+      "text": " 그러면 총괄",
+      "final": false,
+      "speaker": null,
+      "turn": null,
+      "audio_ms": 25920,
+      "error": null
+    },
+    {
+      "t_ms": 26625.0,
+      "kind": "transcript",
+      "text": " 그러면 총괄 평가가 한",
+      "final": false,
+      "speaker": null,
+      "turn": null,
+      "audio_ms": 26480,
+      "error": null
+    },
+    {
+      "t_ms": 27125.0,
+      "kind": "transcript",
+      "text": " 그러면 총괄 평가가 한 번뿐인데",
+      "final": false,
+      "speaker": null,
+      "turn": null,
+      "audio_ms": 26960,
+      "error": null
+    },
+    {
+      "t_ms": 28703.0,
+      "kind": "transcript",
+      "text": " 그러면 총괄 평가가 한 번뿐인데 변별력이",
+      "final": false,
+      "speaker": null,
+      "turn": null,
+      "audio_ms": 28560,
+      "error": null
+    },
+    {
+      "t_ms": 28953.0,
+      "kind": "transcript",
+      "text": " 그러면 총괄 평가가 한 번뿐인데 변별력이 떨어지지",
+      "final": false,
+      "speaker": null,
+      "turn": null,
+      "audio_ms": 28800,
+      "error": null
+    },
+    {
+      "t_ms": 29344.0,
+      "kind": "transcript",
+      "text": " 그러면 총괄 평가가 한 번뿐인데 변별력이 떨어지지 않을까요?",
+      "final": false,
+      "speaker": null,
+      "turn": null,
+      "audio_ms": 29200,
+      "error": null
+    },
+    {
+      "t_ms": 31266.0,
+      "kind": "transcript",
+      "text": " 그러면 총괄 평가가 한 번뿐인데 변별력이 떨어지지 않을까요? 동화",
+      "final": false,
+      "speaker": null,
+      "turn": null,
+      "audio_ms": 31120,
+      "error": null
+    },
+    {
+      "t_ms": 31828.0,
+      "kind": "transcript",
+      "text": " 그러면 총괄 평가가 한 번뿐인데 변별력이 떨어지지 않을까요? 동화 출판",
+      "final": false,
+      "speaker": null,
+      "turn": null,
+      "audio_ms": 31680,
+      "error": null
+    },
+    {
+      "t_ms": 32156.0,
+      "kind": "transcript",
+      "text": " 그러면 총괄 평가가 한 번뿐인데 변별력이 떨어지지 않을까요? 동화 출판 교과서",
+      "final": false,
+      "speaker": null,
+      "turn": null,
+      "audio_ms": 32000,
+      "error": null
+    },
+    {
+      "t_ms": 32641.0,
+      "kind": "transcript",
+      "text": " 그러면 총괄 평가가 한 번뿐인데 변별력이 떨어지지 않을까요? 동화 출판 교과서 기준으로",
+      "final": false,
+      "speaker": null,
+      "turn": null,
+      "audio_ms": 32480,
+      "error": null
+    },
+    {
+      "t_ms": 32781.0,
+      "kind": "transcript",
+      "text": " 그러면 총괄 평가가 한 번뿐인데 변별력이 떨어지지 않을까요? 동화 출판 교과서 기준으로 보면",
+      "final": false,
+      "speaker": null,
+      "turn": null,
+      "audio_ms": 32640,
+      "error": null
+    },
+    {
+      "t_ms": 33594.0,
+      "kind": "transcript",
+      "text": " 그러면 총괄 평가가 한 번뿐인데 변별력이 떨어지지 않을까요? 동화 출판 교과서 기준으로 보면 오",
+      "final": false,
+      "speaker": null,
+      "turn": null,
+      "audio_ms": 33440,
+      "error": null
+    },
+    {
+      "t_ms": 34469.0,
+      "kind": "transcript",
+      "text": " 그러면 총괄 평가가 한 번뿐인데 변별력이 떨어지지 않을까요? 동화 출판 교과서 기준으로 보면 오 단원까지가",
+      "final": false,
+      "speaker": null,
+      "turn": null,
+      "audio_ms": 34320,
+      "error": null
+    },
+    {
+      "t_ms": 34969.0,
+      "kind": "transcript",
+      "text": " 그러면 총괄 평가가 한 번뿐인데 변별력이 떨어지지 않을까요? 동화 출판 교과서 기준으로 보면 오 단원까지가 적정한",
+      "final": false,
+      "speaker": null,
+      "turn": null,
+      "audio_ms": 34800,
+      "error": null
+    },
+    {
+      "t_ms": 35531.0,
+      "kind": "transcript",
+      "text": " 그러면 총괄 평가가 한 번뿐인데 변별력이 떨어지지 않을까요? 동화 출판 교과서 기준으로 보면 오 단원까지가 적정한 범위입니다.",
+      "final": false,
+      "speaker": null,
+      "turn": null,
+      "audio_ms": 35360,
+      "error": null
+    },
+    {
+      "t_ms": 36719.0,
+      "kind": "transcript",
+      "text": " 그러면 총괄 평가가 한 번뿐인데 변별력이 떨어지지 않을까요? 동화 출판 교과서 기준으로 보면 오 단원까지가 적정한 범위입니다. ",
+      "final": false,
+      "speaker": null,
+      "turn": null,
+      "audio_ms": 36560,
+      "error": null
+    },
+    {
+      "t_ms": 36719.0,
+      "kind": "speaker",
+      "text": null,
+      "final": null,
+      "speaker": "A",
+      "turn": null,
+      "audio_ms": 36560,
+      "error": null
+    },
+    {
+      "t_ms": 36719.0,
+      "kind": "speechEnd",
+      "text": null,
+      "final": null,
+      "speaker": null,
+      "turn": 2,
+      "audio_ms": 36060,
+      "error": null
+    },
+    {
+      "t_ms": 36719.0,
+      "kind": "speechComplete",
+      "text": " 그러면 총괄 평가가 한 번뿐인데 변별력이 떨어지지 않을까요? 동화 출판 교과서 기준으로 보면 오 단원까지가 적정한 범위입니다. ",
+      "final": null,
+      "speaker": null,
+      "turn": 2,
+      "audio_ms": 36060,
+      "error": null
+    },
+    {
+      "t_ms": 36953.0,
+      "kind": "speechStart",
+      "text": null,
+      "final": null,
+      "speaker": null,
+      "turn": 3,
+      "audio_ms": 36300,
+      "error": null
+    },
+    {
+      "t_ms": 37266.0,
+      "kind": "transcript",
+      "text": " 좋습니다.",
+      "final": false,
+      "speaker": null,
+      "turn": null,
+      "audio_ms": 37120,
+      "error": null
+    },
+    {
+      "t_ms": 37906.0,
+      "kind": "transcript",
+      "text": " 좋습니다. 그럼",
+      "final": false,
+      "speaker": null,
+      "turn": null,
+      "audio_ms": 37760,
+      "error": null
+    },
+    {
+      "t_ms": 38797.0,
+      "kind": "transcript",
+      "text": " 좋습니다. 그럼 수행평가는",
+      "final": false,
+      "speaker": null,
+      "turn": null,
+      "audio_ms": 38640,
+      "error": null
+    },
+    {
+      "t_ms": 40078.0,
+      "kind": "transcript",
+      "text": " 좋습니다. 그럼 수행평가는 말하기와",
+      "final": false,
+      "speaker": null,
+      "turn": null,
+      "audio_ms": 39920,
+      "error": null
+    },
+    {
+      "t_ms": 40484.0,
+      "kind": "transcript",
+      "text": " 좋습니다. 그럼 수행평가는 말하기와 쓰기,",
+      "final": false,
+      "speaker": null,
+      "turn": null,
+      "audio_ms": 40320,
+      "error": null
+    },
+    {
+      "t_ms": 41188.0,
+      "kind": "transcript",
+      "text": " 좋습니다. 그럼 수행평가는 말하기와 쓰기, 두",
+      "final": false,
+      "speaker": null,
+      "turn": null,
+      "audio_ms": 41040,
+      "error": null
+    },
+    {
+      "t_ms": 41906.0,
+      "kind": "transcript",
+      "text": " 좋습니다. 그럼 수행평가는 말하기와 쓰기, 두 영역으로",
+      "final": false,
+      "speaker": null,
+      "turn": null,
+      "audio_ms": 41760,
+      "error": null
+    },
+    {
+      "t_ms": 42406.0,
+      "kind": "transcript",
+      "text": " 좋습니다. 그럼 수행평가는 말하기와 쓰기, 두 영역으로 나누겠습니다.",
+      "final": false,
+      "speaker": null,
+      "turn": null,
+      "audio_ms": 42240,
+      "error": null
+    },
+    {
+      "t_ms": 43938.0,
+      "kind": "transcript",
+      "text": " 좋습니다. 그럼 수행평가는 말하기와 쓰기, 두 영역으로 나누겠습니다. ",
+      "final": false,
+      "speaker": null,
+      "turn": null,
+      "audio_ms": 43760,
+      "error": null
+    },
+    {
+      "t_ms": 43938.0,
+      "kind": "speaker",
+      "text": null,
+      "final": null,
+      "speaker": "B",
+      "turn": null,
+      "audio_ms": 43760,
+      "error": null
+    },
+    {
+      "t_ms": 43938.0,
+      "kind": "speechEnd",
+      "text": null,
+      "final": null,
+      "speaker": null,
+      "turn": 3,
+      "audio_ms": 43260,
+      "error": null
+    },
+    {
+      "t_ms": 43938.0,
+      "kind": "speechComplete",
+      "text": " 좋습니다. 그럼 수행평가는 말하기와 쓰기, 두 영역으로 나누겠습니다. ",
+      "final": null,
+      "speaker": null,
+      "turn": 3,
+      "audio_ms": 43260,
+      "error": null
+    },
+    {
+      "t_ms": 44016.0,
+      "kind": "speechStart",
+      "text": null,
+      "final": null,
+      "speaker": null,
+      "turn": 4,
+      "audio_ms": 43340,
+      "error": null
+    },
+    {
+      "t_ms": 44078.0,
+      "kind": "transcript",
+      "text": " 말하기",
+      "final": false,
+      "speaker": null,
+      "turn": null,
+      "audio_ms": 43920,
+      "error": null
+    },
+    {
+      "t_ms": 44688.0,
+      "kind": "transcript",
+      "text": " 말하기 평가는",
+      "final": false,
+      "speaker": null,
+      "turn": null,
+      "audio_ms": 44560,
+      "error": null
+    },
+    {
+      "t_ms": 45531.0,
+      "kind": "transcript",
+      "text": " 말하기 평가는 신명중학교",
+      "final": false,
+      "speaker": null,
+      "turn": null,
+      "audio_ms": 45360,
+      "error": null
+    },
+    {
+      "t_ms": 46328.0,
+      "kind": "transcript",
+      "text": " 말하기 평가는 신명중학교 방송실을",
+      "final": false,
+      "speaker": null,
+      "turn": null,
+      "audio_ms": 46160,
+      "error": null
+    },
+    {
+      "t_ms": 46641.0,
+      "kind": "transcript",
+      "text": " 말하기 평가는 신명중학교 방송실을 쓰면",
+      "final": false,
+      "speaker": null,
+      "turn": null,
+      "audio_ms": 46480,
+      "error": null
+    },
+    {
+      "t_ms": 47281.0,
+      "kind": "transcript",
+      "text": " 말하기 평가는 신명중학교 방송실을 쓰면 녹음이",
+      "final": false,
+      "speaker": null,
+      "turn": null,
+      "audio_ms": 47120,
+      "error": null
+    },
+    {
+      "t_ms": 47844.0,
+      "kind": "transcript",
+      "text": " 말하기 평가는 신명중학교 방송실을 쓰면 녹음이 수월할 것",
+      "final": false,
+      "speaker": null,
+      "turn": null,
+      "audio_ms": 47680,
+      "error": null
+    },
+    {
+      "t_ms": 48250.0,
+      "kind": "transcript",
+      "text": " 말하기 평가는 신명중학교 방송실을 쓰면 녹음이 수월할 것 같습니다.",
+      "final": false,
+      "speaker": null,
+      "turn": null,
+      "audio_ms": 48080,
+      "error": null
+    },
+    {
+      "t_ms": 50078.0,
+      "kind": "transcript",
+      "text": " 말하기 평가는 신명중학교 방송실을 쓰면 녹음이 수월할 것 같습니다. 일정은",
+      "final": false,
+      "speaker": null,
+      "turn": null,
+      "audio_ms": 49920,
+      "error": null
+    },
+    {
+      "t_ms": 50469.0,
+      "kind": "transcript",
+      "text": " 말하기 평가는 신명중학교 방송실을 쓰면 녹음이 수월할 것 같습니다. 일정은 십일",
+      "final": false,
+      "speaker": null,
+      "turn": null,
+      "audio_ms": 50320,
+      "error": null
+    },
+    {
+      "t_ms": 50703.0,
+      "kind": "transcript",
+      "text": " 말하기 평가는 신명중학교 방송실을 쓰면 녹음이 수월할 것 같습니다. 일정은 십일 월",
+      "final": false,
+      "speaker": null,
+      "turn": null,
+      "audio_ms": 50560,
+      "error": null
+    },
+    {
+      "t_ms": 50813.0,
+      "kind": "transcript",
+      "text": " 말하기 평가는 신명중학교 방송실을 쓰면 녹음이 수월할 것 같습니다. 일정은 십일 월 셋째",
+      "final": false,
+      "speaker": null,
+      "turn": null,
+      "audio_ms": 50640,
+      "error": null
+    },
+    {
+      "t_ms": 51422.0,
+      "kind": "transcript",
+      "text": " 말하기 평가는 신명중학교 방송실을 쓰면 녹음이 수월할 것 같습니다. 일정은 십일 월 셋째 주가",
+      "final": false,
+      "speaker": null,
+      "turn": null,
+      "audio_ms": 51280,
+      "error": null
+    },
+    {
+      "t_ms": 51828.0,
+      "kind": "transcript",
+      "text": " 말하기 평가는 신명중학교 방송실을 쓰면 녹음이 수월할 것 같습니다. 일정은 십일 월 셋째 주가 어떨까요?",
+      "final": false,
+      "speaker": null,
+      "turn": null,
+      "audio_ms": 51680,
+      "error": null
+    },
+    {
+      "t_ms": 52625.0,
+      "kind": "transcript",
+      "text": " 말하기 평가는 신명중학교 방송실을 쓰면 녹음이 수월할 것 같습니다. 일정은 십일 월 셋째 주가 어떨까요? 그때가",
+      "final": false,
+      "speaker": null,
+      "turn": null,
+      "audio_ms": 52480,
+      "error": null
+    },
+    {
+      "t_ms": 53453.0,
+      "kind": "transcript",
+      "text": " 말하기 평가는 신명중학교 방송실을 쓰면 녹음이 수월할 것 같습니다. 일정은 십일 월 셋째 주가 어떨까요? 그때가 비교적 여유가",
+      "final": false,
+      "speaker": null,
+      "turn": null,
+      "audio_ms": 53280,
+      "error": null
+    },
+    {
+      "t_ms": 53891.0,
+      "kind": "transcript",
+      "text": " 말하기 평가는 신명중학교 방송실을 쓰면 녹음이 수월할 것 같습니다. 일정은 십일 월 셋째 주가 어떨까요? 그때가 비교적 여유가 있습니다.",
+      "final": false,
+      "speaker": null,
+      "turn": null,
+      "audio_ms": 53760,
+      "error": null
+    },
+    {
+      "t_ms": 55063.0,
+      "kind": "transcript",
+      "text": " 말하기 평가는 신명중학교 방송실을 쓰면 녹음이 수월할 것 같습니다. 일정은 십일 월 셋째 주가 어떨까요? 그때가 비교적 여유가 있습니다. ",
+      "final": false,
+      "speaker": null,
+      "turn": null,
+      "audio_ms": 54880,
+      "error": null
+    },
+    {
+      "t_ms": 55063.0,
+      "kind": "speaker",
+      "text": null,
+      "final": null,
+      "speaker": "A",
+      "turn": null,
+      "audio_ms": 54880,
+      "error": null
+    },
+    {
+      "t_ms": 55063.0,
+      "kind": "speechEnd",
+      "text": null,
+      "final": null,
+      "speaker": null,
+      "turn": 4,
+      "audio_ms": 54380,
+      "error": null
+    },
+    {
+      "t_ms": 55063.0,
+      "kind": "speechComplete",
+      "text": " 말하기 평가는 신명중학교 방송실을 쓰면 녹음이 수월할 것 같습니다. 일정은 십일 월 셋째 주가 어떨까요? 그때가 비교적 여유가 있습니다. ",
+      "final": null,
+      "speaker": null,
+      "turn": 4,
+      "audio_ms": 54380,
+      "error": null
+    },
+    {
+      "t_ms": 55281.0,
+      "kind": "speechStart",
+      "text": null,
+      "final": null,
+      "speaker": null,
+      "turn": 5,
+      "audio_ms": 54620,
+      "error": null
+    },
+    {
+      "t_ms": 55281.0,
+      "kind": "transcript",
+      "text": " 네,",
+      "final": false,
+      "speaker": null,
+      "turn": null,
+      "audio_ms": 55120,
+      "error": null
+    },
+    {
+      "t_ms": 56219.0,
+      "kind": "transcript",
+      "text": " 네, 십일",
+      "final": false,
+      "speaker": null,
+      "turn": null,
+      "audio_ms": 56080,
+      "error": null
+    },
+    {
+      "t_ms": 56313.0,
+      "kind": "transcript",
+      "text": " 네, 십일 월",
+      "final": false,
+      "speaker": null,
+      "turn": null,
+      "audio_ms": 56160,
+      "error": null
+    },
+    {
+      "t_ms": 57031.0,
+      "kind": "transcript",
+      "text": " 네, 십일 월 십육",
+      "final": false,
+      "speaker": null,
+      "turn": null,
+      "audio_ms": 56880,
+      "error": null
+    },
+    {
+      "t_ms": 57359.0,
+      "kind": "transcript",
+      "text": " 네, 십일 월 십육 일",
+      "final": false,
+      "speaker": null,
+      "turn": null,
+      "audio_ms": 57200,
+      "error": null
+    },
+    {
+      "t_ms": 57688.0,
+      "kind": "transcript",
+      "text": " 네, 십일 월 십육 일 화요일로",
+      "final": false,
+      "speaker": null,
+      "turn": null,
+      "audio_ms": 57520,
+      "error": null
+    },
+    {
+      "t_ms": 58406.0,
+      "kind": "transcript",
+      "text": " 네, 십일 월 십육 일 화요일로 잡겠습니다.",
+      "final": false,
+      "speaker": null,
+      "turn": null,
+      "audio_ms": 58240,
+      "error": null
+    },
+    {
+      "t_ms": 59109.0,
+      "kind": "transcript",
+      "text": " 네, 십일 월 십육 일 화요일로 잡겠습니다. 이",
+      "final": false,
+      "speaker": null,
+      "turn": null,
+      "audio_ms": 58960,
+      "error": null
+    },
+    {
+      "t_ms": 59781.0,
+      "kind": "transcript",
+      "text": " 네, 십일 월 십육 일 화요일로 잡겠습니다. 이 없으시죠?",
+      "final": false,
+      "speaker": null,
+      "turn": null,
+      "audio_ms": 59600,
+      "error": null
+    },
+    {
+      "t_ms": 60891.0,
+      "kind": "transcript",
+      "text": " 네, 십일 월 십육 일 화요일로 잡겠습니다. 이 없으시죠? ",
+      "final": false,
+      "speaker": null,
+      "turn": null,
+      "audio_ms": 60720,
+      "error": null
+    },
+    {
+      "t_ms": 60891.0,
+      "kind": "speaker",
+      "text": null,
+      "final": null,
+      "speaker": "B",
+      "turn": null,
+      "audio_ms": 60720,
+      "error": null
+    },
+    {
+      "t_ms": 60891.0,
+      "kind": "speechEnd",
+      "text": null,
+      "final": null,
+      "speaker": null,
+      "turn": 5,
+      "audio_ms": 60220,
+      "error": null
+    },
+    {
+      "t_ms": 60891.0,
+      "kind": "speechComplete",
+      "text": " 네, 십일 월 십육 일 화요일로 잡겠습니다. 이 없으시죠? ",
+      "final": null,
+      "speaker": null,
+      "turn": 5,
+      "audio_ms": 60220,
+      "error": null
+    },
+    {
+      "t_ms": 60953.0,
+      "kind": "speechStart",
+      "text": null,
+      "final": null,
+      "speaker": null,
+      "turn": 6,
+      "audio_ms": 60300,
+      "error": null
+    },
+    {
+      "t_ms": 61500.0,
+      "kind": "transcript",
+      "text": " 동의합니다.",
+      "final": false,
+      "speaker": null,
+      "turn": null,
+      "audio_ms": 61360,
+      "error": null
+    },
+    {
+      "t_ms": 62703.0,
+      "kind": "transcript",
+      "text": " 동의합니다. 저도",
+      "final": false,
+      "speaker": null,
+      "turn": null,
+      "audio_ms": 62560,
+      "error": null
+    },
+    {
+      "t_ms": 63266.0,
+      "kind": "transcript",
+      "text": " 동의합니다. 저도 동의합니다.",
+      "final": false,
+      "speaker": null,
+      "turn": null,
+      "audio_ms": 63120,
+      "error": null
+    },
+    {
+      "t_ms": 63266.0,
+      "kind": "audio_sent_all",
+      "audio_ms": 63320
+    },
+    {
+      "t_ms": 63531.0,
+      "kind": "transcript",
+      "text": " 동의합니다. 저도 동의합니다. ",
+      "final": false,
+      "speaker": null,
+      "turn": null,
+      "audio_ms": 63360,
+      "error": null
+    },
+    {
+      "t_ms": 63531.0,
+      "kind": "speaker",
+      "text": null,
+      "final": null,
+      "speaker": "A",
+      "turn": null,
+      "audio_ms": 63360,
+      "error": null
+    },
+    {
+      "t_ms": 63531.0,
+      "kind": "speechEnd",
+      "text": null,
+      "final": null,
+      "speaker": null,
+      "turn": 6,
+      "audio_ms": 62860,
+      "error": null
+    },
+    {
+      "t_ms": 63531.0,
+      "kind": "speechComplete",
+      "text": " 동의합니다. 저도 동의합니다. ",
+      "final": null,
+      "speaker": null,
+      "turn": 6,
+      "audio_ms": 62860,
+      "error": null
+    },
+    {
+      "t_ms": 63547.0,
+      "kind": "transcript",
+      "text": "",
+      "final": true,
+      "speaker": null,
+      "turn": null,
+      "audio_ms": 63360,
+      "error": null
+    }
+  ]
+}

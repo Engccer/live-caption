@@ -1,0 +1,635 @@
+{
+  "provider": "deepgram",
+  "audio": "fixture_ko_3spk.wav",
+  "sample_rate": 24000,
+  "audio_ms": 68820,
+  "wall_s": 70.3,
+  "events": [
+    {
+      "t_ms": 0.0,
+      "kind": "connected"
+    },
+    {
+      "t_ms": 1235.0,
+      "kind": "transcript",
+      "text": "네.",
+      "final": true,
+      "speech_final": true,
+      "speaker": "0",
+      "audio_ms": 750
+    },
+    {
+      "t_ms": 3094.0,
+      "kind": "transcript",
+      "text": "그럼 이 학기 영어과 평가",
+      "final": false,
+      "speech_final": false,
+      "speaker": "0",
+      "audio_ms": 2800
+    },
+    {
+      "t_ms": 4157.0,
+      "kind": "transcript",
+      "text": "그럼 이 학기 영어과 평가계획 회의를 시작한",
+      "final": false,
+      "speech_final": false,
+      "speaker": "0",
+      "audio_ms": 3840
+    },
+    {
+      "t_ms": 4985.0,
+      "kind": "transcript",
+      "text": "그럼 이 학기 영어과 평가계획 회의를 시작하겠습니다.",
+      "final": true,
+      "speech_final": true,
+      "speaker": "0",
+      "audio_ms": 4560
+    },
+    {
+      "t_ms": 6938.0,
+      "kind": "transcript",
+      "text": "지난번에",
+      "final": false,
+      "speech_final": false,
+      "speaker": "0",
+      "audio_ms": 6640
+    },
+    {
+      "t_ms": 8000.0,
+      "kind": "transcript",
+      "text": "지난번에 수행평가 비중을",
+      "final": false,
+      "speech_final": false,
+      "speaker": "0",
+      "audio_ms": 7680
+    },
+    {
+      "t_ms": 9032.0,
+      "kind": "transcript",
+      "text": "지난번에 수행평가 비중을 사 십 퍼센트로",
+      "final": false,
+      "speech_final": false,
+      "speaker": "0",
+      "audio_ms": 8720
+    },
+    {
+      "t_ms": 10047.0,
+      "kind": "transcript",
+      "text": "지난번에 수행평가 비중을",
+      "final": true,
+      "speech_final": false,
+      "speaker": "0",
+      "audio_ms": 7940
+    },
+    {
+      "t_ms": 10063.0,
+      "kind": "transcript",
+      "text": "십 퍼센트로 올리자고",
+      "final": false,
+      "speech_final": false,
+      "speaker": "0",
+      "audio_ms": 9600
+    },
+    {
+      "t_ms": 10954.0,
+      "kind": "transcript",
+      "text": "십 퍼센트로 올리자고 하셨는데, 그대로",
+      "final": false,
+      "speech_final": false,
+      "speaker": "0",
+      "audio_ms": 10640
+    },
+    {
+      "t_ms": 11922.0,
+      "kind": "transcript",
+      "text": "십 퍼센트로 올리자고 하셨는데 그대로 갈까요?",
+      "final": true,
+      "speech_final": true,
+      "speaker": "0",
+      "audio_ms": 11500
+    },
+    {
+      "t_ms": 13891.0,
+      "kind": "transcript",
+      "text": "저는 조금",
+      "final": false,
+      "speech_final": false,
+      "speaker": "0",
+      "audio_ms": 13600
+    },
+    {
+      "t_ms": 14938.0,
+      "kind": "transcript",
+      "text": "저는 조금 조심스럽습니다.",
+      "final": false,
+      "speech_final": false,
+      "speaker": "0",
+      "audio_ms": 14640
+    },
+    {
+      "t_ms": 15563.0,
+      "kind": "transcript",
+      "text": "저는 조금 조심스럽습니다.",
+      "final": true,
+      "speech_final": true,
+      "speaker": "0",
+      "audio_ms": 15070
+    },
+    {
+      "t_ms": 16360.0,
+      "kind": "transcript",
+      "text": "학생들 부담이 꽤",
+      "final": false,
+      "speech_final": false,
+      "speaker": "0",
+      "audio_ms": 16080
+    },
+    {
+      "t_ms": 17438.0,
+      "kind": "transcript",
+      "text": "학생들 부담이 커질 것 같아서요",
+      "final": false,
+      "speech_final": false,
+      "speaker": "0",
+      "audio_ms": 17120
+    },
+    {
+      "t_ms": 17875.0,
+      "kind": "transcript",
+      "text": "학생들 부담이 커질 것 같아서요",
+      "final": true,
+      "speech_final": true,
+      "speaker": "0",
+      "audio_ms": 17360
+    },
+    {
+      "t_ms": 19735.0,
+      "kind": "transcript",
+      "text": "그 부분은",
+      "final": false,
+      "speech_final": false,
+      "speaker": "0",
+      "audio_ms": 19440
+    },
+    {
+      "t_ms": 20797.0,
+      "kind": "transcript",
+      "text": "그 부분은 저도 고민했습니다.",
+      "final": false,
+      "speech_final": false,
+      "speaker": "0",
+      "audio_ms": 20480
+    },
+    {
+      "t_ms": 21704.0,
+      "kind": "transcript",
+      "text": "그 부분은 저도 고민했습니다.",
+      "final": true,
+      "speech_final": true,
+      "speaker": "0",
+      "audio_ms": 21160
+    },
+    {
+      "t_ms": 22469.0,
+      "kind": "transcript",
+      "text": "대신",
+      "final": false,
+      "speech_final": false,
+      "speaker": "0",
+      "audio_ms": 22160
+    },
+    {
+      "t_ms": 23500.0,
+      "kind": "transcript",
+      "text": "대신 집필 평가를",
+      "final": false,
+      "speech_final": false,
+      "speaker": "0",
+      "audio_ms": 23200
+    },
+    {
+      "t_ms": 24563.0,
+      "kind": "transcript",
+      "text": "대신 집필 평가를 한 번 줄이면",
+      "final": false,
+      "speech_final": false,
+      "speaker": "0",
+      "audio_ms": 24240
+    },
+    {
+      "t_ms": 25360.0,
+      "kind": "transcript",
+      "text": "대신 집필 평가를 한 번 줄이면 어떨까요?",
+      "final": true,
+      "speech_final": true,
+      "speaker": "0",
+      "audio_ms": 24860
+    },
+    {
+      "t_ms": 27250.0,
+      "kind": "transcript",
+      "text": "그러면",
+      "final": false,
+      "speech_final": false,
+      "speaker": "0",
+      "audio_ms": 26960
+    },
+    {
+      "t_ms": 28297.0,
+      "kind": "transcript",
+      "text": "그러면 총괄 평가가",
+      "final": false,
+      "speech_final": false,
+      "speaker": "0",
+      "audio_ms": 28000
+    },
+    {
+      "t_ms": 29360.0,
+      "kind": "transcript",
+      "text": "그러면 총괄 평가가 한 번뿐인데",
+      "final": false,
+      "speech_final": false,
+      "speaker": "0",
+      "audio_ms": 29040
+    },
+    {
+      "t_ms": 29454.0,
+      "kind": "transcript",
+      "text": "그러면 총괄 평가가 한 번뿐인데",
+      "final": true,
+      "speech_final": true,
+      "speaker": "0",
+      "audio_ms": 29100
+    },
+    {
+      "t_ms": 30438.0,
+      "kind": "transcript",
+      "text": "변별력이 떨어지는",
+      "final": false,
+      "speech_final": false,
+      "speaker": "0",
+      "audio_ms": 30160
+    },
+    {
+      "t_ms": 31500.0,
+      "kind": "transcript",
+      "text": "변별력이 떨어지지 않을까요?",
+      "final": false,
+      "speech_final": false,
+      "speaker": "0",
+      "audio_ms": 31200
+    },
+    {
+      "t_ms": 31625.0,
+      "kind": "transcript",
+      "text": "변별력이 떨어지지 않을까요?",
+      "final": true,
+      "speech_final": true,
+      "speaker": "0",
+      "audio_ms": 31270
+    },
+    {
+      "t_ms": 33657.0,
+      "kind": "transcript",
+      "text": "동화 출판",
+      "final": false,
+      "speech_final": false,
+      "speaker": "0",
+      "audio_ms": 33360
+    },
+    {
+      "t_ms": 34672.0,
+      "kind": "transcript",
+      "text": "동화 출판 교과서 기준으로",
+      "final": false,
+      "speech_final": false,
+      "speaker": "0",
+      "audio_ms": 34400
+    },
+    {
+      "t_ms": 35579.0,
+      "kind": "transcript",
+      "text": "동화 출판 교과서 기준으로 보면",
+      "final": true,
+      "speech_final": true,
+      "speaker": "0",
+      "audio_ms": 35130
+    },
+    {
+      "t_ms": 36485.0,
+      "kind": "transcript",
+      "text": "오 단원까지가",
+      "final": false,
+      "speech_final": false,
+      "speaker": "0",
+      "audio_ms": 36160
+    },
+    {
+      "t_ms": 37516.0,
+      "kind": "transcript",
+      "text": "오 단원까지가 적정한 범위인",
+      "final": false,
+      "speech_final": false,
+      "speaker": "0",
+      "audio_ms": 37200
+    },
+    {
+      "t_ms": 38141.0,
+      "kind": "transcript",
+      "text": "오 단원까지가 적정한 범위입니다.",
+      "final": true,
+      "speech_final": true,
+      "speaker": "0",
+      "audio_ms": 37630
+    },
+    {
+      "t_ms": 39985.0,
+      "kind": "transcript",
+      "text": "좋습니다.",
+      "final": false,
+      "speech_final": false,
+      "speaker": "0",
+      "audio_ms": 39680
+    },
+    {
+      "t_ms": 40266.0,
+      "kind": "transcript",
+      "text": "좋습니다.",
+      "final": true,
+      "speech_final": true,
+      "speaker": "0",
+      "audio_ms": 39820
+    },
+    {
+      "t_ms": 41188.0,
+      "kind": "transcript",
+      "text": "그럼 수행",
+      "final": false,
+      "speech_final": false,
+      "speaker": "0",
+      "audio_ms": 40880
+    },
+    {
+      "t_ms": 42235.0,
+      "kind": "transcript",
+      "text": "그럼 수행평가는",
+      "final": false,
+      "speech_final": false,
+      "speaker": "0",
+      "audio_ms": 41920
+    },
+    {
+      "t_ms": 43266.0,
+      "kind": "transcript",
+      "text": "그럼 수행평가는 말하기와 쓰기,",
+      "final": false,
+      "speech_final": false,
+      "speaker": "0",
+      "audio_ms": 42960
+    },
+    {
+      "t_ms": 43735.0,
+      "kind": "transcript",
+      "text": "그럼 수행평가는 말하기와 쓰기,",
+      "final": true,
+      "speech_final": true,
+      "speaker": "0",
+      "audio_ms": 43260
+    },
+    {
+      "t_ms": 44625.0,
+      "kind": "transcript",
+      "text": "두 영역으로",
+      "final": false,
+      "speech_final": false,
+      "speaker": "0",
+      "audio_ms": 44320
+    },
+    {
+      "t_ms": 45688.0,
+      "kind": "transcript",
+      "text": "두 영역으로 나누겠습니다.",
+      "final": true,
+      "speech_final": true,
+      "speaker": "0",
+      "audio_ms": 45240
+    },
+    {
+      "t_ms": 47516.0,
+      "kind": "transcript",
+      "text": "말하기 평가",
+      "final": false,
+      "speech_final": false,
+      "speaker": "0",
+      "audio_ms": 47280
+    },
+    {
+      "t_ms": 48641.0,
+      "kind": "transcript",
+      "text": "말하기 평가는 열 명 중",
+      "final": false,
+      "speech_final": false,
+      "speaker": "0",
+      "audio_ms": 48320
+    },
+    {
+      "t_ms": 49688.0,
+      "kind": "transcript",
+      "text": "말하기 평가는 신명중학교 방송실을 쓴",
+      "final": false,
+      "speech_final": false,
+      "speaker": "0",
+      "audio_ms": 49360
+    },
+    {
+      "t_ms": 50594.0,
+      "kind": "transcript",
+      "text": "말하기 평가는 신명중학교",
+      "final": true,
+      "speech_final": false,
+      "speaker": "0",
+      "audio_ms": 48680
+    },
+    {
+      "t_ms": 50594.0,
+      "kind": "transcript",
+      "text": "방송실을 쓰면 녹음이",
+      "final": false,
+      "speech_final": false,
+      "speaker": "0",
+      "audio_ms": 50240
+    },
+    {
+      "t_ms": 51657.0,
+      "kind": "transcript",
+      "text": "방송실을 쓰면 녹음이 수월할 것 같습니다.",
+      "final": false,
+      "speech_final": false,
+      "speaker": "0",
+      "audio_ms": 51280
+    },
+    {
+      "t_ms": 51844.0,
+      "kind": "transcript",
+      "text": "방송실을 쓰면 녹음이 수월할 것 같습니다.",
+      "final": true,
+      "speech_final": true,
+      "speaker": "0",
+      "audio_ms": 51370
+    },
+    {
+      "t_ms": 53719.0,
+      "kind": "transcript",
+      "text": "일정은",
+      "final": false,
+      "speech_final": false,
+      "speaker": "0",
+      "audio_ms": 53440
+    },
+    {
+      "t_ms": 54797.0,
+      "kind": "transcript",
+      "text": "일정은 십일 월 셋째 주",
+      "final": false,
+      "speech_final": false,
+      "speaker": "0",
+      "audio_ms": 54480
+    },
+    {
+      "t_ms": 55829.0,
+      "kind": "transcript",
+      "text": "일정은 십일 월 셋째 주가 어떨까요?",
+      "final": false,
+      "speech_final": false,
+      "speaker": "0",
+      "audio_ms": 55520
+    },
+    {
+      "t_ms": 56141.0,
+      "kind": "transcript",
+      "text": "일정은 십일 월 셋째 주가 어떨까요?",
+      "final": true,
+      "speech_final": true,
+      "speaker": "0",
+      "audio_ms": 55670
+    },
+    {
+      "t_ms": 56985.0,
+      "kind": "transcript",
+      "text": "그때가 비교적",
+      "final": false,
+      "speech_final": false,
+      "speaker": "0",
+      "audio_ms": 56720
+    },
+    {
+      "t_ms": 58141.0,
+      "kind": "transcript",
+      "text": "그때가 비교적 여유가 있습니다.",
+      "final": true,
+      "speech_final": true,
+      "speaker": "0",
+      "audio_ms": 57660
+    },
+    {
+      "t_ms": 60094.0,
+      "kind": "transcript",
+      "text": "네.",
+      "final": false,
+      "speech_final": false,
+      "speaker": "0",
+      "audio_ms": 59760
+    },
+    {
+      "t_ms": 61094.0,
+      "kind": "transcript",
+      "text": "네. 십일 월 십육 일",
+      "final": false,
+      "speech_final": false,
+      "speaker": "0",
+      "audio_ms": 60800
+    },
+    {
+      "t_ms": 62141.0,
+      "kind": "transcript",
+      "text": "네. 십일 월 십육 일 월요일로 잡겠습",
+      "final": false,
+      "speech_final": false,
+      "speaker": "0",
+      "audio_ms": 61840
+    },
+    {
+      "t_ms": 62969.0,
+      "kind": "transcript",
+      "text": "네. 십일 월 십육 일 월요일로 잡겠습니다.",
+      "final": true,
+      "speech_final": true,
+      "speaker": "0",
+      "audio_ms": 62460
+    },
+    {
+      "t_ms": 63844.0,
+      "kind": "transcript",
+      "text": "이 없으시죠?",
+      "final": false,
+      "speech_final": false,
+      "speaker": "0",
+      "audio_ms": 63520
+    },
+    {
+      "t_ms": 64329.0,
+      "kind": "transcript",
+      "text": "이 없으시죠?",
+      "final": true,
+      "speech_final": true,
+      "speaker": "0",
+      "audio_ms": 63840
+    },
+    {
+      "t_ms": 66204.0,
+      "kind": "transcript",
+      "text": "동의합니다.",
+      "final": false,
+      "speech_final": false,
+      "speaker": "0",
+      "audio_ms": 65920
+    },
+    {
+      "t_ms": 66532.0,
+      "kind": "transcript",
+      "text": "동의합니다.",
+      "final": true,
+      "speech_final": true,
+      "speaker": "0",
+      "audio_ms": 66080
+    },
+    {
+      "t_ms": 68485.0,
+      "kind": "transcript",
+      "text": "저도 동의합니다.",
+      "final": false,
+      "speech_final": false,
+      "speaker": "0",
+      "audio_ms": 68160
+    },
+    {
+      "t_ms": 68813.0,
+      "kind": "audio_sent_all",
+      "audio_ms": 68820
+    },
+    {
+      "t_ms": 69079.0,
+      "kind": "transcript",
+      "text": "저도 동의합니다.",
+      "final": true,
+      "speech_final": true,
+      "speaker": "0",
+      "audio_ms": 68680
+    },
+    {
+      "t_ms": 69250.0,
+      "kind": "Metadata",
+      "error": "{'type': 'Metadata', 'transaction_key': 'deprecated', 'request_id': '01a06411-a889-7d83-aff3-393d2890b99a', 'sha256': '62e6a85ada68658dc4046871132a7c95caf90702e70abf9d8c3445e1e3945b06', 'created': '20"
+    }
+  ]
+}

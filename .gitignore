@@ -1,0 +1,13 @@
+__pycache__/
+*.pyc
+.env
+.DS_Store
+
+# 픽스처 중간 산출물 (make_fixture.py로 재생성)
+spike/turns/
+spike/_concat.txt
+
+# 실제 녹음과 그 파생물은 절대 커밋하지 않는다 (CLAUDE.md 테스트 음원 취급 규칙)
+spike/real/
+*.m4a
+*_전사*.txt
