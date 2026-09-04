@@ -52,6 +52,11 @@
 - **웹앱 유력 후보는 [WhisperLiveKit](https://github.com/QuentinFuxa/WhisperLiveKit)**
   (Apache-2.0). AlignAtt/LocalAgreement 저지연 정책 + Streaming Sortformer 화자분리 +
   번역이 이미 조립된 셀프호스팅 서버.
+- **웹은 실행 환경에 따라 온디바이스 여부가 갈린다**(2026-09-05 Chrome 152 실측).
+  데스크톱 Chrome은 `SpeechRecognition.available({langs:['ko-KR'], processLocally:true})`가
+  `downloadable`을 돌려준다(한국어 온디바이스 가능). **그러나 iOS Safari는 오디오를 애플
+  서버로 보낸다** — iOS의 모든 브라우저가 WebKit이므로 아이폰 웹에서는 온디바이스가
+  성립하지 않는다. 웹앱 화면에 "기기 안에서만 처리"를 무조건 표기하지 말 것.
 - **iOS는 Apple `SFSpeechRecognizer`(iOS 26+ `SpeechAnalyzer`)가 검증된 무료 온디바이스
   한국어 실시간 옵션**이다. 부족하면 WhisperKit(MIT, CoreML)으로 교체.
 - **국내 프로바이더는 실시간 스트리밍은 되지만 실시간 화자분리는 전부 없다.** 리턴제로
