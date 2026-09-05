@@ -1,3 +1,9 @@
+> 🤖 **이 파일은 자동 생성됩니다. 직접 수정하지 마세요.**
+> 정본은 `CLAUDE.md` 입니다. 내용을 바꾸려면 `CLAUDE.md` 를 수정한 뒤
+> 프로젝트 루트에서 `python sync_agent_docs.py` 를 실행하세요.
+> 이 파일을 직접 고치면 다음 동기화 때 경고와 함께 덮어쓰기 대상이 됩니다.
+
+<!-- SYNC-BODY-START: 이 줄 아래 본문은 CLAUDE.md 와 100% 동일하게 자동 생성됨 -->
 # live-caption
 
 이 파일은 Claude Code(claude.ai/code)가 이 저장소에서 작업할 때 참고하는 가이드다.
