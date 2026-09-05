@@ -1,6 +1,7 @@
 __pycache__/
 *.pyc
 .env
+.env*.local
 .DS_Store
 
 # 픽스처 중간 산출물 (make_fixture.py로 재생성)
@@ -11,3 +12,6 @@ spike/_concat.txt
 spike/real/
 *.m4a
 *_전사*.txt
+
+# Vercel CLI 링크 메타데이터 (spike 배포용)
+.vercel/

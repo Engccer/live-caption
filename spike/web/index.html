@@ -1,0 +1,221 @@
+<!doctype html>
+<html lang="ko">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>라이브 캡션 스파이크: 연속 인식</title>
+<style>
+  :root { color-scheme: light dark; }
+  body { margin: 0; padding: 16px; font: 18px/1.5 -apple-system, system-ui, sans-serif; max-width: 720px; margin-inline: auto; }
+  h1 { font-size: 22px; margin: 0 0 12px; }
+  h2 { font-size: 18px; margin: 24px 0 8px; }
+  button { font: inherit; min-height: 44px; padding: 8px 20px; border-radius: 8px; border: 1px solid currentColor; background: transparent; color: inherit; }
+  button:focus-visible { outline: 3px solid #0a84ff; outline-offset: 2px; }
+  #toggle { font-size: 22px; font-weight: 700; min-width: 160px; }
+  label { display: block; min-height: 44px; display: flex; align-items: center; gap: 8px; }
+  input[type=checkbox] { width: 24px; height: 24px; }
+  #final { font-size: 24px; line-height: 1.6; min-height: 3em; white-space: pre-wrap; }
+  #interim { font-size: 24px; line-height: 1.6; opacity: .55; min-height: 1.6em; margin: 0; }
+  #log { font: 14px/1.45 ui-monospace, Menlo, monospace; padding-left: 1.5em; margin: 0; }
+  #summary { border: 1px solid currentColor; border-radius: 8px; padding: 12px; }
+  #summary:focus { outline: 3px solid #0a84ff; }
+  #env { font-size: 15px; opacity: .8; white-space: pre-wrap; margin: 0 0 12px; }
+  [hidden] { display: none !important; }
+</style>
+</head>
+<body>
+<main>
+  <h1>라이브 캡션 스파이크: 연속 인식</h1>
+  <p id="env">환경 확인 중...</p>
+
+  <button id="toggle" type="button">인식 시작</button>
+  <label><input id="autoRestart" type="checkbox" checked> 끊기면 자동으로 다시 시작</label>
+  <label><input id="continuous" type="checkbox" checked> continuous 옵션 사용</label>
+
+  <h2>캡션</h2>
+  <div id="final"></div>
+  <p id="interim"></p>
+
+  <div id="summary" tabindex="-1" hidden></div>
+
+  <h2>이벤트 로그</h2>
+  <button id="copy" type="button" hidden>로그 복사</button>
+  <ol id="log"></ol>
+</main>
+
+<script>
+(() => {
+  const $ = (id) => document.getElementById(id);
+  const SR = window.SpeechRecognition || window.webkitSpeechRecognition;
+  const LANG = 'ko-KR';
+
+  // 세션 상태. 정지 버튼을 누르기 전까지의 모든 사건을 여기 모은다.
+  let rec = null;
+  let running = false;      // 사용자가 "시작"을 눌러 둔 상태인가
+  let t0 = 0;               // 세션 시작 시각
+  let endedAt = 0;          // 마지막 end 이벤트 시각(재시작 공백 측정용)
+  let speechEndAt = 0;      // 마지막 speechend 시각(침묵 길이 측정용)
+  let lastFinalAt = 0;
+  const stats = { ends: 0, restarts: 0, maxGap: 0, finals: 0, errors: [], silences: [], restartAttemptFailures: 0 };
+  const lines = [];
+
+  const now = () => performance.now();
+  const ms = (v) => `${Math.round(v)}ms`;
+  const stamp = () => ((now() - t0) / 1000).toFixed(1).padStart(6) + 's';
+
+  function log(msg) {
+    const line = `${stamp()}  ${msg}`;
+    lines.push(line);
+    const li = document.createElement('li');
+    li.textContent = line;
+    $('log').appendChild(li);
+  }
+
+  // 환경 정보: API 존재 여부와 온디바이스 가용성. 결과 자체가 측정값이므로 그대로 적는다.
+  async function probeEnv() {
+    const out = [`UA: ${navigator.userAgent}`];
+    if (!SR) { out.push('SpeechRecognition API 없음'); $('env').textContent = out.join('\n'); $('toggle').disabled = true; return; }
+    out.push(`API: ${window.SpeechRecognition ? 'SpeechRecognition' : 'webkitSpeechRecognition'}`);
+    if (typeof SR.available === 'function') {
+      try {
+        const local = await SR.available({ langs: [LANG], processLocally: true });
+        const remote = await SR.available({ langs: [LANG], processLocally: false });
+        out.push(`available(ko-KR) 온디바이스: ${local}, 서버: ${remote}`);
+      } catch (e) { out.push(`available() 오류: ${e.name}: ${e.message}`); }
+    } else {
+      out.push('available() 없음 (온디바이스 여부를 API로 알 수 없음)');
+    }
+    $('env').textContent = out.join('\n');
+  }
+
+  function build() {
+    const r = new SR();
+    r.lang = LANG;
+    r.continuous = $('continuous').checked;
+    r.interimResults = true;
+    r.maxAlternatives = 1;
+
+    r.onstart = () => {
+      if (endedAt) {
+        const gap = now() - endedAt;
+        stats.restarts++;
+        stats.maxGap = Math.max(stats.maxGap, gap);
+        log(`재시작 완료 (공백 ${ms(gap)})`);
+        endedAt = 0;
+      } else {
+        log('start');
+      }
+    };
+    r.onaudiostart = () => log('audiostart');
+    r.onsoundstart = () => log('soundstart');
+    r.onspeechstart = () => {
+      if (speechEndAt) {
+        const silence = now() - speechEndAt;
+        stats.silences.push(silence);
+        log(`speechstart (직전 침묵 ${ms(silence)})`);
+        speechEndAt = 0;
+      } else log('speechstart');
+    };
+    r.onspeechend = () => { speechEndAt = now(); log('speechend'); };
+    r.onsoundend = () => log('soundend');
+    r.onaudioend = () => log('audioend');
+    r.onnomatch = () => log('nomatch');
+    r.onerror = (e) => {
+      stats.errors.push(e.error);
+      log(`error: ${e.error}${e.message ? ' ' + e.message : ''}`);
+    };
+    r.onresult = (e) => {
+      let interim = '';
+      for (let i = e.resultIndex; i < e.results.length; i++) {
+        const res = e.results[i];
+        const text = res[0].transcript.trim();
+        if (res.isFinal) {
+          stats.finals++;
+          const since = lastFinalAt ? ` (직전 확정 후 ${ms(now() - lastFinalAt)})` : '';
+          lastFinalAt = now();
+          log(`final${since}: ${text}`);
+          $('final').textContent += (($('final').textContent ? '\n' : '') + text);
+        } else {
+          interim += text + ' ';
+        }
+      }
+      $('interim').textContent = interim;
+    };
+    r.onend = () => {
+      stats.ends++;
+      endedAt = now();
+      $('interim').textContent = '';
+      log(running ? 'end (사용자가 정지하지 않았는데 끊김)' : 'end (사용자 정지)');
+      if (running && $('autoRestart').checked) restart();
+    };
+    return r;
+  }
+
+  // Safari는 end 직후 start()에 InvalidStateError를 내기도 한다. 짧게 물러서 재시도한다.
+  function restart(attempt = 0) {
+    try {
+      rec = build();
+      rec.start();
+    } catch (e) {
+      stats.restartAttemptFailures++;
+      log(`재시작 실패 ${attempt + 1}회: ${e.name}`);
+      if (attempt < 5) setTimeout(() => restart(attempt + 1), 250);
+      else { running = false; finish(); }
+    }
+  }
+
+  function start() {
+    running = true;
+    t0 = now(); endedAt = 0; speechEndAt = 0; lastFinalAt = 0;
+    Object.assign(stats, { ends: 0, restarts: 0, maxGap: 0, finals: 0, errors: [], silences: [], restartAttemptFailures: 0 });
+    lines.length = 0;
+    $('log').textContent = ''; $('final').textContent = ''; $('interim').textContent = '';
+    $('summary').hidden = true; $('copy').hidden = true;
+    $('toggle').textContent = '인식 정지';
+    $('autoRestart').disabled = $('continuous').disabled = true;
+    log(`세션 시작 (continuous=${$('continuous').checked}, autoRestart=${$('autoRestart').checked})`);
+    rec = build();
+    rec.start();
+  }
+
+  function stop() {
+    running = false;
+    if (rec) rec.stop();
+    finish();
+  }
+
+  function finish() {
+    const total = (now() - t0) / 1000;
+    const sil = stats.silences.length ? Math.max(...stats.silences) : 0;
+    const summary = [
+      `총 ${total.toFixed(0)}초.`,
+      `확정 결과 ${stats.finals}개.`,
+      `인식 끊김(end) ${stats.ends}회, 자동 재시작 ${stats.restarts}회, 최대 공백 ${ms(stats.maxGap)}.`,
+      `측정된 최대 침묵 ${ms(sil)}.`,
+      stats.errors.length ? `오류: ${stats.errors.join(', ')}.` : '오류 없음.',
+      stats.restartAttemptFailures ? `재시작 실패 ${stats.restartAttemptFailures}회.` : '',
+    ].filter(Boolean).join(' ');
+    lines.push(`요약: ${summary}`);
+    $('summary').textContent = `요약. ${summary}`;
+    $('summary').hidden = false;
+    $('copy').hidden = false;
+    $('toggle').textContent = '인식 시작';
+    $('autoRestart').disabled = $('continuous').disabled = false;
+    $('summary').focus();
+  }
+
+  $('toggle').addEventListener('click', () => (running ? stop() : start()));
+  $('copy').addEventListener('click', async () => {
+    const text = [$('env').textContent, '', ...lines].join('\n');
+    try { await navigator.clipboard.writeText(text); $('copy').textContent = '복사됨'; }
+    catch { $('copy').textContent = '복사 실패'; }
+    setTimeout(() => ($('copy').textContent = '로그 복사'), 1500);
+  });
+  // 화면 잠김·앱 전환은 iOS에서 인식을 죽이는 대표 원인이라 함께 남긴다.
+  document.addEventListener('visibilitychange', () => { if (running) log(`visibility: ${document.visibilityState}`); });
+
+  probeEnv();
+})();
+</script>
+</body>
+</html>
