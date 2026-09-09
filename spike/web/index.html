@@ -57,6 +57,9 @@
   let speechEndAt = 0;      // 마지막 speechend 시각(침묵 길이 측정용)
   let lastFinalAt = 0;
   let restartTimer = null;
+  let stopTimer = null;
+  let stopping = false;
+  let generation = 0;
   const stats = { ends: 0, restarts: 0, maxGap: 0, finals: 0, errors: [], silences: [], restartAttemptFailures: 0 };
   const lines = [];
 
@@ -89,14 +92,17 @@
     $('env').textContent = out.join('\n');
   }
 
-  function build() {
+  function build(activeGeneration) {
     const r = new SR();
+    const current = (handler) => (...args) => {
+      if (activeGeneration === generation) handler(...args);
+    };
     r.lang = LANG;
     r.continuous = $('continuous').checked;
     r.interimResults = true;
     r.maxAlternatives = 1;
 
-    r.onstart = () => {
+    r.onstart = current(() => {
       if (endedAt) {
         const gap = now() - endedAt;
         stats.restarts++;
@@ -106,26 +112,26 @@
       } else {
         log('start');
       }
-    };
-    r.onaudiostart = () => log('audiostart');
-    r.onsoundstart = () => log('soundstart');
-    r.onspeechstart = () => {
+    });
+    r.onaudiostart = current(() => log('audiostart'));
+    r.onsoundstart = current(() => log('soundstart'));
+    r.onspeechstart = current(() => {
       if (speechEndAt) {
         const silence = now() - speechEndAt;
         stats.silences.push(silence);
         log(`speechstart (직전 침묵 ${ms(silence)})`);
         speechEndAt = 0;
       } else log('speechstart');
-    };
-    r.onspeechend = () => { speechEndAt = now(); log('speechend'); };
-    r.onsoundend = () => log('soundend');
-    r.onaudioend = () => log('audioend');
-    r.onnomatch = () => log('nomatch');
-    r.onerror = (e) => {
+    });
+    r.onspeechend = current(() => { speechEndAt = now(); log('speechend'); });
+    r.onsoundend = current(() => log('soundend'));
+    r.onaudioend = current(() => log('audioend'));
+    r.onnomatch = current(() => log('nomatch'));
+    r.onerror = current((e) => {
       stats.errors.push(e.error);
       log(`error: ${e.error}${e.message ? ' ' + e.message : ''}`);
-    };
-    r.onresult = (e) => {
+    });
+    r.onresult = current((e) => {
       let interim = '';
       for (let i = e.resultIndex; i < e.results.length; i++) {
         const res = e.results[i];
@@ -141,22 +147,23 @@
         }
       }
       $('interim').textContent = interim;
-    };
-    r.onend = () => {
+    });
+    r.onend = current(() => {
       stats.ends++;
       endedAt = now();
       $('interim').textContent = '';
       log(running ? 'end (사용자가 정지하지 않았는데 끊김)' : 'end (사용자 정지)');
-      if (running && $('autoRestart').checked) restart();
-    };
+      if (running && $('autoRestart').checked) restart(0, activeGeneration);
+      else if (stopping) finish();
+    });
     return r;
   }
 
   // Safari는 end 직후 start()에 InvalidStateError를 내기도 한다. 짧게 물러서 재시도한다.
-  function restart(attempt = 0) {
-    if (!running) return;
+  function restart(attempt = 0, activeGeneration = generation) {
+    if (!running || activeGeneration !== generation) return;
     try {
-      rec = build();
+      rec = build(activeGeneration);
       rec.start();
       restartTimer = null;
     } catch (e) {
@@ -165,7 +172,7 @@
       if (attempt < 5) {
         restartTimer = setTimeout(() => {
           restartTimer = null;
-          restart(attempt + 1);
+          restart(attempt + 1, activeGeneration);
         }, 250);
       } else {
         restartTimer = null;
@@ -177,6 +184,8 @@
 
   function start() {
     running = true;
+    stopping = false;
+    generation++;
     t0 = now(); endedAt = 0; speechEndAt = 0; lastFinalAt = 0;
     Object.assign(stats, { ends: 0, restarts: 0, maxGap: 0, finals: 0, errors: [], silences: [], restartAttemptFailures: 0 });
     lines.length = 0;
@@ -185,25 +194,42 @@
     $('toggle').textContent = '인식 정지';
     $('autoRestart').disabled = $('continuous').disabled = true;
     log(`세션 시작 (continuous=${$('continuous').checked}, autoRestart=${$('autoRestart').checked})`);
-    rec = build();
+    rec = build(generation);
     rec.start();
   }
 
   function stop() {
     running = false;
+    stopping = true;
     if (restartTimer !== null) {
       clearTimeout(restartTimer);
       restartTimer = null;
     }
+    $('toggle').textContent = '정지 중';
+    $('toggle').setAttribute('aria-disabled', 'true');
+    stopTimer = setTimeout(() => {
+      stopTimer = null;
+      if (stopping) {
+        log('end 이벤트 대기 시간 초과');
+        finish();
+      }
+    }, 2000);
     try {
       if (rec) rec.stop();
+      else finish();
     } catch (e) {
       log(`정지 요청 중 무시한 오류: ${e.name}`);
+      finish();
     }
-    finish();
   }
 
   function finish() {
+    if (stopTimer !== null) {
+      clearTimeout(stopTimer);
+      stopTimer = null;
+    }
+    stopping = false;
+    generation++;
     const total = (now() - t0) / 1000;
     const sil = stats.silences.length ? Math.max(...stats.silences) : 0;
     const summary = [
@@ -219,11 +245,15 @@
     $('summary').hidden = false;
     $('copy').hidden = false;
     $('toggle').textContent = '인식 시작';
+    $('toggle').removeAttribute('aria-disabled');
     $('autoRestart').disabled = $('continuous').disabled = false;
     $('summary').focus();
   }
 
-  $('toggle').addEventListener('click', () => (running ? stop() : start()));
+  $('toggle').addEventListener('click', () => {
+    if (stopping) return;
+    running ? stop() : start();
+  });
   $('copy').addEventListener('click', async () => {
     const text = [$('env').textContent, '', ...lines].join('\n');
     try { await navigator.clipboard.writeText(text); $('copy').textContent = '복사됨'; }
