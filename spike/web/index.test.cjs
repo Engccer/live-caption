@@ -12,6 +12,7 @@ function loadPage({ failSecondStart = true } = {}) {
   const recognitionInstances = [];
   let nextTimerId = 1;
   let startAttempts = 0;
+  let clock = 1000;
 
   function element(id) {
     if (!elements.has(id)) {
@@ -85,10 +86,10 @@ function loadPage({ failSecondStart = true } = {}) {
       clipboard: { async writeText() {} },
       userAgent: 'Fake iPhone Safari',
     },
-    performance: { now: () => 1000 },
-    setTimeout(callback) {
+    performance: { now: () => clock },
+    setTimeout(callback, delay = 0) {
       const timerId = nextTimerId++;
-      timers.set(timerId, callback);
+      timers.set(timerId, { callback, dueAt: clock + delay });
       return timerId;
     },
     window: { webkitSpeechRecognition: FakeSpeechRecognition },
@@ -101,10 +102,27 @@ function loadPage({ failSecondStart = true } = {}) {
     get startAttempts() { return startAttempts; },
     recognitionInstances,
     runTimers() {
-      for (const [timerId, callback] of [...timers]) {
+      if (!timers.size) return;
+      clock = Math.min(...[...timers.values()].map((timer) => timer.dueAt));
+      for (const [timerId, timer] of [...timers]) {
+        if (timer.dueAt > clock) continue;
         timers.delete(timerId);
-        callback();
+        timer.callback();
       }
+    },
+    advanceTimersBy(duration) {
+      const target = clock + duration;
+      while (true) {
+        const dueTimers = [...timers.entries()]
+          .filter(([, timer]) => timer.dueAt <= target)
+          .sort((a, b) => a[1].dueAt - b[1].dueAt);
+        if (!dueTimers.length) break;
+        const [timerId, timer] = dueTimers[0];
+        clock = timer.dueAt;
+        timers.delete(timerId);
+        timer.callback();
+      }
+      clock = target;
     },
   };
 }
@@ -112,8 +130,35 @@ function loadPage({ failSecondStart = true } = {}) {
 function reachRetryWait(page) {
   page.element('toggle').click();
   page.recognitionInstances[0].endUnexpectedly();
+  assert.equal(page.startAttempts, 1, '종료 직후에는 재시작하지 않아야 한다');
+  page.runTimers();
   assert.equal(page.startAttempts, 2, '첫 자동 재시작이 실패해야 한다');
 }
+
+test('예상치 못한 종료 뒤 정리 대기 시간이 지나야 재시작한다', () => {
+  const page = loadPage({ failSecondStart: false });
+  page.element('toggle').click();
+
+  page.recognitionInstances[0].endUnexpectedly();
+
+  assert.equal(page.startAttempts, 1);
+  page.advanceTimersBy(4999);
+  assert.equal(page.startAttempts, 1);
+  page.advanceTimersBy(1);
+  assert.equal(page.startAttempts, 2);
+});
+
+test('정리 대기 중 사용자가 정지하면 새 인식 세션을 시작하지 않는다', () => {
+  const page = loadPage({ failSecondStart: false });
+  page.element('toggle').click();
+  page.recognitionInstances[0].endUnexpectedly();
+
+  page.element('toggle').click();
+  page.runTimers();
+
+  assert.equal(page.startAttempts, 1);
+  assert.equal(page.element('summary').hidden, false);
+});
 
 test('재시작 대기 중 정지해도 요약과 로그 복사 버튼을 표시한다', () => {
   const page = loadPage();

@@ -48,6 +48,7 @@
   const $ = (id) => document.getElementById(id);
   const SR = window.SpeechRecognition || window.webkitSpeechRecognition;
   const LANG = 'ko-KR';
+  const RESTART_DELAY_MS = 5000;
 
   // 세션 상태. 정지 버튼을 누르기 전까지의 모든 사건을 여기 모은다.
   let rec = null;
@@ -153,10 +154,21 @@
       endedAt = now();
       $('interim').textContent = '';
       log(running ? 'end (사용자가 정지하지 않았는데 끊김)' : 'end (사용자 정지)');
-      if (running && $('autoRestart').checked) restart(0, activeGeneration);
+      if (running && $('autoRestart').checked) scheduleRestart(activeGeneration);
       else if (stopping) finish();
     });
     return r;
+  }
+
+  // iOS Safari는 end 직후 이전 캡처 소스를 정리하는 동안 새 소스를 열면
+  // audiostart만 발생하고 실제 오디오가 전달되지 않을 수 있다.
+  function scheduleRestart(activeGeneration = generation) {
+    if (!running || activeGeneration !== generation) return;
+    log(`재시작 대기 (${ms(RESTART_DELAY_MS)})`);
+    restartTimer = setTimeout(() => {
+      restartTimer = null;
+      restart(0, activeGeneration);
+    }, RESTART_DELAY_MS);
   }
 
   // Safari는 end 직후 start()에 InvalidStateError를 내기도 한다. 짧게 물러서 재시도한다.
