@@ -12,6 +12,7 @@ function loadPage({ failSecondStart = true } = {}) {
   const recognitionInstances = [];
   let nextTimerId = 1;
   let startAttempts = 0;
+  let abortAttempts = 0;
   let clock = 1000;
 
   function element(id) {
@@ -61,10 +62,28 @@ function loadPage({ failSecondStart = true } = {}) {
       this.started = false;
     }
 
-    completeStopWithFinal(transcript) {
+    abort() {
+      abortAttempts++;
+      if (!this.started) {
+        const error = new Error('recognizer is not active');
+        error.name = 'InvalidStateError';
+        throw error;
+      }
+      this.started = false;
+    }
+
+    emitAbortError() {
+      this.onerror?.({ error: 'aborted', message: 'Aborted by test' });
+    }
+
+    addFinal(transcript) {
       const result = [{ transcript }];
       result.isFinal = true;
       this.onresult({ resultIndex: 0, results: [result] });
+    }
+
+    completeStopWithFinal(transcript) {
+      this.addFinal(transcript);
       this.onend();
     }
 
@@ -100,6 +119,7 @@ function loadPage({ failSecondStart = true } = {}) {
   return {
     element,
     get startAttempts() { return startAttempts; },
+    get abortAttempts() { return abortAttempts; },
     recognitionInstances,
     runTimers() {
       if (!timers.size) return;
@@ -126,6 +146,96 @@ function loadPage({ failSecondStart = true } = {}) {
     },
   };
 }
+
+test('재시작 시험은 현재 인식을 중단하고 5초 뒤 새 세션을 시작한다', () => {
+  const page = loadPage({ failSecondStart: false });
+  page.element('toggle').click();
+
+  page.element('restartTest').click();
+  page.recognitionInstances[0].emitAbortError();
+  page.recognitionInstances[0].endUnexpectedly();
+
+  assert.equal(page.abortAttempts, 1);
+  assert.equal(page.startAttempts, 1);
+  assert.equal(page.element('restartTest').disabled, false);
+  assert.equal(page.element('restartTest')['aria-disabled'], 'true');
+  assert.match(page.element('restartStatus').textContent, /5초/);
+  page.advanceTimersBy(4999);
+  assert.equal(page.startAttempts, 1);
+  page.advanceTimersBy(1);
+  assert.equal(page.startAttempts, 2);
+  assert.equal(page.element('restartTest').disabled, false);
+  assert.equal(page.element('restartTest')['aria-disabled'], undefined);
+  assert.match(page.element('restartStatus').textContent, /다시 시작됨/);
+});
+
+test('재시작 시험의 aborted 이벤트는 오류 요약에 포함하지 않는다', () => {
+  const page = loadPage({ failSecondStart: false });
+  page.element('toggle').click();
+  page.element('restartTest').click();
+  page.recognitionInstances[0].emitAbortError();
+  page.recognitionInstances[0].endUnexpectedly();
+  page.advanceTimersBy(5000);
+
+  page.element('toggle').click();
+  page.recognitionInstances[1].completeStopWithFinal('재시작 뒤 발화');
+
+  assert.match(page.element('summary').textContent, /오류 없음/);
+});
+
+test('자동 재시작 옵션이 꺼져도 재시작 시험은 새 세션을 시작한다', () => {
+  const page = loadPage({ failSecondStart: false });
+  page.element('autoRestart').checked = false;
+  page.element('toggle').click();
+
+  page.element('restartTest').click();
+  page.recognitionInstances[0].emitAbortError();
+  page.recognitionInstances[0].endUnexpectedly();
+  page.advanceTimersBy(5000);
+
+  assert.equal(page.startAttempts, 2);
+});
+
+test('재시작 시험 버튼은 포커스를 유지한 채 비활성 상태를 전달한다', () => {
+  const page = loadPage({ failSecondStart: false });
+  page.element('toggle').click();
+  page.element('restartTest').focus();
+
+  page.element('restartTest').click();
+
+  assert.equal(page.element('restartTest').focused, true);
+  assert.equal(page.element('restartTest').disabled, false);
+  assert.equal(page.element('restartTest')['aria-disabled'], 'true');
+});
+
+test('재시작 시험에서 end가 누락돼도 2초 뒤 복구 절차로 넘어간다', () => {
+  const page = loadPage({ failSecondStart: false });
+  page.element('toggle').click();
+  page.element('restartTest').click();
+  page.recognitionInstances[0].emitAbortError();
+
+  page.advanceTimersBy(1999);
+  assert.equal(page.startAttempts, 1);
+  page.advanceTimersBy(1);
+  page.advanceTimersBy(4999);
+  assert.equal(page.startAttempts, 1);
+  page.advanceTimersBy(1);
+  assert.equal(page.startAttempts, 2);
+});
+
+test('재시작 시험 전후의 확정 결과를 모두 보존한다', () => {
+  const page = loadPage({ failSecondStart: false });
+  page.element('toggle').click();
+  page.recognitionInstances[0].addFinal('재시작 전 발화');
+
+  page.element('restartTest').click();
+  page.recognitionInstances[0].emitAbortError();
+  page.recognitionInstances[0].endUnexpectedly();
+  page.advanceTimersBy(5000);
+  page.recognitionInstances[1].addFinal('재시작 후 발화');
+
+  assert.equal(page.element('final').textContent, '재시작 전 발화\n재시작 후 발화');
+});
 
 function reachRetryWait(page) {
   page.element('toggle').click();

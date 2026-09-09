@@ -29,6 +29,8 @@
   <p id="env">환경 확인 중...</p>
 
   <button id="toggle" type="button">인식 시작</button>
+  <button id="restartTest" type="button" hidden>재시작 시험</button>
+  <p id="restartStatus" role="status" aria-atomic="true"></p>
   <label><input id="autoRestart" type="checkbox" checked> 끊기면 자동으로 다시 시작</label>
   <label><input id="continuous" type="checkbox" checked> continuous 옵션 사용</label>
 
@@ -49,6 +51,7 @@
   const SR = window.SpeechRecognition || window.webkitSpeechRecognition;
   const LANG = 'ko-KR';
   const RESTART_DELAY_MS = 5000;
+  const CONTROLLED_END_TIMEOUT_MS = 2000;
 
   // 세션 상태. 정지 버튼을 누르기 전까지의 모든 사건을 여기 모은다.
   let rec = null;
@@ -58,8 +61,10 @@
   let speechEndAt = 0;      // 마지막 speechend 시각(침묵 길이 측정용)
   let lastFinalAt = 0;
   let restartTimer = null;
+  let controlledEndTimer = null;
   let stopTimer = null;
   let stopping = false;
+  let controlledRestart = false;
   let generation = 0;
   const stats = { ends: 0, restarts: 0, maxGap: 0, finals: 0, errors: [], silences: [], restartAttemptFailures: 0 };
   const lines = [];
@@ -96,7 +101,7 @@
   function build(activeGeneration) {
     const r = new SR();
     const current = (handler) => (...args) => {
-      if (activeGeneration === generation) handler(...args);
+      if (activeGeneration === generation && r === rec) handler(...args);
     };
     r.lang = LANG;
     r.continuous = $('continuous').checked;
@@ -110,6 +115,10 @@
         stats.maxGap = Math.max(stats.maxGap, gap);
         log(`재시작 완료 (공백 ${ms(gap)})`);
         endedAt = 0;
+        controlledRestart = false;
+        $('restartTest').removeAttribute('aria-disabled');
+        $('restartTest').textContent = '재시작 시험';
+        $('restartStatus').textContent = '인식이 다시 시작됨';
       } else {
         log('start');
       }
@@ -129,6 +138,10 @@
     r.onaudioend = current(() => log('audioend'));
     r.onnomatch = current(() => log('nomatch'));
     r.onerror = current((e) => {
+      if (controlledRestart && e.error === 'aborted') {
+        log('재시작 시험으로 인식 중단');
+        return;
+      }
       stats.errors.push(e.error);
       log(`error: ${e.error}${e.message ? ' ' + e.message : ''}`);
     });
@@ -150,11 +163,15 @@
       $('interim').textContent = interim;
     });
     r.onend = current(() => {
+      if (controlledEndTimer !== null) {
+        clearTimeout(controlledEndTimer);
+        controlledEndTimer = null;
+      }
       stats.ends++;
       endedAt = now();
       $('interim').textContent = '';
-      log(running ? 'end (사용자가 정지하지 않았는데 끊김)' : 'end (사용자 정지)');
-      if (running && $('autoRestart').checked) scheduleRestart(activeGeneration);
+      log(!running ? 'end (사용자 정지)' : controlledRestart ? 'end (재시작 시험)' : 'end (사용자가 정지하지 않았는데 끊김)');
+      if (running && (controlledRestart || $('autoRestart').checked)) scheduleRestart(activeGeneration);
       else if (stopping) finish();
     });
     return r;
@@ -163,8 +180,11 @@
   // iOS Safari는 end 직후 이전 캡처 소스를 정리하는 동안 새 소스를 열면
   // audiostart만 발생하고 실제 오디오가 전달되지 않을 수 있다.
   function scheduleRestart(activeGeneration = generation) {
-    if (!running || activeGeneration !== generation) return;
+    if (!running || activeGeneration !== generation || restartTimer !== null) return;
     log(`재시작 대기 (${ms(RESTART_DELAY_MS)})`);
+    $('restartTest').setAttribute('aria-disabled', 'true');
+    $('restartTest').textContent = '재시작 대기 중';
+    $('restartStatus').textContent = '인식 연결 복구 중. 5초 후 다시 시작합니다.';
     restartTimer = setTimeout(() => {
       restartTimer = null;
       restart(0, activeGeneration);
@@ -197,6 +217,7 @@
   function start() {
     running = true;
     stopping = false;
+    controlledRestart = false;
     generation++;
     t0 = now(); endedAt = 0; speechEndAt = 0; lastFinalAt = 0;
     Object.assign(stats, { ends: 0, restarts: 0, maxGap: 0, finals: 0, errors: [], silences: [], restartAttemptFailures: 0 });
@@ -204,6 +225,10 @@
     $('log').textContent = ''; $('final').textContent = ''; $('interim').textContent = '';
     $('summary').hidden = true; $('copy').hidden = true;
     $('toggle').textContent = '인식 정지';
+    $('restartTest').hidden = false;
+    $('restartTest').removeAttribute('aria-disabled');
+    $('restartTest').textContent = '재시작 시험';
+    $('restartStatus').textContent = '';
     $('autoRestart').disabled = $('continuous').disabled = true;
     log(`세션 시작 (continuous=${$('continuous').checked}, autoRestart=${$('autoRestart').checked})`);
     rec = build(generation);
@@ -213,9 +238,14 @@
   function stop() {
     running = false;
     stopping = true;
+    controlledRestart = false;
     if (restartTimer !== null) {
       clearTimeout(restartTimer);
       restartTimer = null;
+    }
+    if (controlledEndTimer !== null) {
+      clearTimeout(controlledEndTimer);
+      controlledEndTimer = null;
     }
     $('toggle').textContent = '정지 중';
     $('toggle').setAttribute('aria-disabled', 'true');
@@ -240,7 +270,12 @@
       clearTimeout(stopTimer);
       stopTimer = null;
     }
+    if (controlledEndTimer !== null) {
+      clearTimeout(controlledEndTimer);
+      controlledEndTimer = null;
+    }
     stopping = false;
+    controlledRestart = false;
     generation++;
     const total = (now() - t0) / 1000;
     const sil = stats.silences.length ? Math.max(...stats.silences) : 0;
@@ -257,6 +292,10 @@
     $('summary').hidden = false;
     $('copy').hidden = false;
     $('toggle').textContent = '인식 시작';
+    $('restartTest').hidden = true;
+    $('restartTest').removeAttribute('aria-disabled');
+    $('restartTest').textContent = '재시작 시험';
+    $('restartStatus').textContent = '';
     $('toggle').removeAttribute('aria-disabled');
     $('autoRestart').disabled = $('continuous').disabled = false;
     $('summary').focus();
@@ -265,6 +304,35 @@
   $('toggle').addEventListener('click', () => {
     if (stopping) return;
     running ? stop() : start();
+  });
+  $('restartTest').addEventListener('click', () => {
+    if (!running || stopping || controlledRestart || restartTimer !== null || !rec) return;
+    controlledRestart = true;
+    $('restartTest').setAttribute('aria-disabled', 'true');
+    $('restartTest').textContent = '재시작 준비 중';
+    $('restartStatus').textContent = '현재 인식을 종료하고 있습니다.';
+    log('재시작 시험 요청');
+    const activeGeneration = generation;
+    controlledEndTimer = setTimeout(() => {
+      controlledEndTimer = null;
+      if (!running || !controlledRestart || activeGeneration !== generation) return;
+      log('재시작 시험 end 이벤트 대기 시간 초과');
+      endedAt = now();
+      scheduleRestart(activeGeneration);
+    }, CONTROLLED_END_TIMEOUT_MS);
+    try {
+      rec.abort();
+    } catch (e) {
+      if (controlledEndTimer !== null) {
+        clearTimeout(controlledEndTimer);
+        controlledEndTimer = null;
+      }
+      controlledRestart = false;
+      $('restartTest').removeAttribute('aria-disabled');
+      $('restartTest').textContent = '재시작 시험';
+      $('restartStatus').textContent = '재시작 시험을 시작하지 못했습니다.';
+      log(`재시작 시험 실패: ${e.name}`);
+    }
   });
   $('copy').addEventListener('click', async () => {
     const text = [$('env').textContent, '', ...lines].join('\n');
