@@ -56,6 +56,7 @@
   let endedAt = 0;          // 마지막 end 이벤트 시각(재시작 공백 측정용)
   let speechEndAt = 0;      // 마지막 speechend 시각(침묵 길이 측정용)
   let lastFinalAt = 0;
+  let restartTimer = null;
   const stats = { ends: 0, restarts: 0, maxGap: 0, finals: 0, errors: [], silences: [], restartAttemptFailures: 0 };
   const lines = [];
 
@@ -153,14 +154,24 @@
 
   // Safari는 end 직후 start()에 InvalidStateError를 내기도 한다. 짧게 물러서 재시도한다.
   function restart(attempt = 0) {
+    if (!running) return;
     try {
       rec = build();
       rec.start();
+      restartTimer = null;
     } catch (e) {
       stats.restartAttemptFailures++;
       log(`재시작 실패 ${attempt + 1}회: ${e.name}`);
-      if (attempt < 5) setTimeout(() => restart(attempt + 1), 250);
-      else { running = false; finish(); }
+      if (attempt < 5) {
+        restartTimer = setTimeout(() => {
+          restartTimer = null;
+          restart(attempt + 1);
+        }, 250);
+      } else {
+        restartTimer = null;
+        running = false;
+        finish();
+      }
     }
   }
 
@@ -180,7 +191,15 @@
 
   function stop() {
     running = false;
-    if (rec) rec.stop();
+    if (restartTimer !== null) {
+      clearTimeout(restartTimer);
+      restartTimer = null;
+    }
+    try {
+      if (rec) rec.stop();
+    } catch (e) {
+      log(`정지 요청 중 무시한 오류: ${e.name}`);
+    }
     finish();
   }
 
