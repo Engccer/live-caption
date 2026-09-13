@@ -3,12 +3,13 @@
 // 동작은 애초에 불가능하다. 이 캐시가 주는 것은 회의실 와이파이가 느릴 때 화면이
 // 즉시 뜨는 것뿐이다.
 
-const CACHE = 'maldongmu-v2';   // 파일을 고치면 이 숫자를 올린다. 안 올리면 옛 화면에 갇힌다.
+const CACHE = 'maldongmu-v3';   // 파일을 고치면 이 숫자를 올린다. 안 올리면 옛 화면에 갇힌다.
 
 const SHELL = [
   './',
   './index.html',
   './app.js',
+  './diagnostics.js',
   './captions.js',
   './recognition.js',
   './manifest.webmanifest',

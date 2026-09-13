@@ -163,11 +163,12 @@ button {
 
 #subControls {
   display: flex;
+  flex-wrap: wrap;
   gap: 10px;
 }
 
 #subControls button {
-  flex: 1;
+  flex: 1 1 120px;
   min-height: 48px;
   font-size: 16px;
   border: 1px solid var(--border);
@@ -214,6 +215,7 @@ button:focus-visible {
     <button type="button" id="fontDown">글자 작게</button>
     <button type="button" id="fontUp">글자 크게</button>
     <button type="button" id="copy" hidden>전체 복사</button>
+    <button type="button" id="copyDiagnostics" hidden>진단 정보 복사</button>
   </div>
   <p id="notice">음성은 브라우저의 인식 서비스로 전송되어 처리됩니다.</p>
 </div>

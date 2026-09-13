@@ -6,7 +6,7 @@ const html = readFileSync(new URL('../index.html', import.meta.url), 'utf8');
 
 test('app.js가 찾는 id가 모두 있다', () => {
   for (const id of ['status', 'captions', 'finals', 'interim',
-                    'toggle', 'fontDown', 'fontUp', 'copy', 'notice']) {
+                    'toggle', 'fontDown', 'fontUp', 'copy', 'copyDiagnostics', 'notice']) {
     assert.match(html, new RegExp(`id=["']${id}["']`), `#${id}가 없다`);
   }
 });
@@ -18,6 +18,7 @@ test('live region은 하나뿐이다', () => {
 
 test('복사 버튼은 숨긴 채로 시작한다', () => {
   assert.match(html, /<button[^>]*id=["']copy["'][^>]*hidden/);
+  assert.match(html, /<button[^>]*id=["']copyDiagnostics["'][^>]*hidden/);
 });
 
 test('UI 라벨에 이모지를 쓰지 않는다', () => {

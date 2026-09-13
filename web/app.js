@@ -2,6 +2,7 @@
 // 판단은 recognition.js와 captions.js가 하고 여기서는 DOM만 만진다.
 
 import { createRecognizer } from './recognition.js';
+import { createDiagnostics, describeEnvironment, checkAvailability } from './diagnostics.js';
 import {
   createCaptionStore,
   nextFontSize,
@@ -19,6 +20,8 @@ const toggleEl = $('toggle');
 const fontDownEl = $('fontDown');
 const fontUpEl = $('fontUp');
 const copyEl = $('copy');
+const copyDiagnosticsEl = $('copyDiagnostics');
+const SpeechRecognitionCtor = window.SpeechRecognition || window.webkitSpeechRecognition;
 
 const STATUS_TEXT = {
   idle: '시작을 누르면 자막이 나옵니다',
@@ -51,6 +54,9 @@ let fontSize = loadFontSize(storage);
 let renderedFinals = 0;   // finalsEl에 이미 그린 문단 수
 let errorShown = false;   // 오류 문구를 status 갱신이 덮지 않게 한다
 let wakeLock = null;
+let diagnostics = null;
+let availability = '정보 없음';
+let copyingDiagnostics = false;
 
 // --- 화면 갱신 ---
 
@@ -88,6 +94,7 @@ function setStatusText(text) {
 // --- 인식 사건 처리 ---
 
 function onRecognizerEvent(event) {
+  diagnostics?.record(event, performance.now());
   switch (event.type) {
     case 'final':
       keepingScroll(() => {
@@ -123,12 +130,20 @@ function onRecognizerEvent(event) {
         errorShown = true;
         setStatusText(ERROR_TEXT[event.kind]);
       }
+      // 첫 start 재시도 소진은 idle 사건이 없다. 모듈 자체의 종료 오류만 보완한다.
+      // onstart 전 일반 브라우저 오류도 idle에서 오므로 상태만으로 종료하면 안 된다.
+      const startFailed = event.kind === 'not-supported' || event.kind === 'permission-denied' ||
+        (event.kind === 'unknown' && event.message?.startsWith('인식을 다시 시작하지 못했습니다: '));
+      if (recognizer.getStatus() === 'idle' && startFailed) {
+        updateToggle('idle');
+        finishSession();
+      }
       break;
   }
 }
 
 const recognizer = createRecognizer({
-  SpeechRecognitionCtor: window.SpeechRecognition || window.webkitSpeechRecognition,
+  SpeechRecognitionCtor,
   onEvent: onRecognizerEvent,
   // timers를 넘기지 않는다. 평범한 객체로 넘기면 브라우저가 Illegal invocation으로
   // 거부하고, 피해가 재시작 예약에서만 나 아이폰 첫 끊김에서 조용히 멈춘다.
@@ -147,6 +162,15 @@ function updateToggle(status) {
 }
 
 function startSession() {
+  const date = new Date();
+  const localDate = `${date.getFullYear()}-${String(date.getMonth() + 1).padStart(2, '0')}-${String(date.getDate()).padStart(2, '0')}`;
+  diagnostics = createDiagnostics({ startedAt: performance.now(), date: localDate });
+  const session = diagnostics;
+  availability = typeof SpeechRecognitionCtor?.available === 'function' ? '조회 중' : '미지원';
+  checkAvailability(SpeechRecognitionCtor).then((value) => {
+    if (diagnostics === session) availability = value;
+  });
+  copyDiagnosticsEl.hidden = true;
   store.clear();
   finalsEl.textContent = '';
   renderedFinals = 0;
@@ -165,6 +189,10 @@ function startSession() {
 }
 
 function finishSession() {
+  if (diagnostics) {
+    diagnostics.record({ type: 'status', status: 'idle' }, performance.now());
+    copyDiagnosticsEl.hidden = false;
+  }
   releaseWakeLock();
   // 복사할 것이 있을 때만 버튼을 내놓는다.
   if (store.getState().finals.length > 0) copyEl.hidden = false;
@@ -174,7 +202,10 @@ toggleEl.addEventListener('click', () => {
   const status = recognizer.getStatus();
   if (status === 'stopping') return;
   if (status === 'idle') startSession();
-  else recognizer.stop();
+  else {
+    diagnostics?.requestStop();
+    recognizer.stop();
+  }
 });
 
 function changeFont(step) {
@@ -200,6 +231,30 @@ copyEl.addEventListener('click', async () => {
   setTimeout(() => {
     copyEl.textContent = '전체 복사';
   }, 1500);
+});
+
+copyDiagnosticsEl.addEventListener('click', async () => {
+  if (copyingDiagnostics || copyDiagnosticsEl.hidden || !diagnostics) return;
+  copyingDiagnostics = true;
+  copyDiagnosticsEl.setAttribute('aria-disabled', 'true');
+  const session = diagnostics;
+  try {
+    const environment = describeEnvironment({
+      userAgent: navigator.userAgent,
+      maxTouchPoints: navigator.maxTouchPoints,
+      width: window.screen?.width,
+      height: window.screen?.height,
+      standalone: window.matchMedia?.('(display-mode: standalone)').matches || navigator.standalone === true,
+    });
+    // 가용성 조회를 여기서 기다리지 않는다. 사용자 클릭 안에서 바로 복사를 요청한다.
+    await navigator.clipboard.writeText(session.toText({ environment, fontSize, availability }));
+    if (diagnostics === session) setStatusText('진단 정보를 복사했습니다');
+  } catch {
+    if (diagnostics === session) setStatusText('진단 정보를 복사하지 못했습니다. 다시 눌러 주세요');
+  } finally {
+    copyingDiagnostics = false;
+    copyDiagnosticsEl.removeAttribute('aria-disabled');
+  }
 });
 
 // --- 화면 꺼짐 방지 ---
