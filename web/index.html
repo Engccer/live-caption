@@ -4,6 +4,15 @@
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
 <title>말동무</title>
+
+<link rel="manifest" href="./manifest.webmanifest">
+<meta name="theme-color" content="#1550c8">
+
+<!-- iOS는 manifest의 display를 읽지 않는다. 홈 화면에서 주소창 없이 열려면 이 메타가 필요하다. -->
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-status-bar-style" content="default">
+<meta name="apple-mobile-web-app-title" content="말동무">
+<link rel="apple-touch-icon" href="./icon-192.png">
 <style>
 /* 색은 대비비를 계산해서 골랐다. 라이트 기준 확정 글자 17.8:1,
    중간 결과 7.0:1, 상태줄과 고지 7.4:1. 다크는 각각 17.0:1, 9.0:1, 8.5:1.

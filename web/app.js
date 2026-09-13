@@ -235,6 +235,12 @@ document.addEventListener('visibilitychange', () => {
 
 captionsEl.style.fontSize = `${fontSize}px`;
 
+// 서비스워커. 실패해도 앱은 그대로 돈다(캐시가 없을 뿐이다).
+// file://이나 지원하지 않는 브라우저에서는 조용히 넘어간다.
+if ('serviceWorker' in navigator) {
+  navigator.serviceWorker.register('./sw.js').catch(() => {});
+}
+
 if (!(window.SpeechRecognition || window.webkitSpeechRecognition)) {
   setStatusText(ERROR_TEXT['not-supported']);
   // 페이지 로드 직후라 아직 아무도 포커스를 쥐고 있지 않아 disabled가 안전하다.
