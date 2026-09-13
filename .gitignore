@@ -15,3 +15,4 @@ spike/real/
 
 # Vercel CLI 링크 메타데이터 (spike 배포용)
 .vercel/
+docs/private/
