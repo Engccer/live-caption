@@ -117,8 +117,18 @@ git -C ~/Mac-Projects/live-caption merge --ff-only feat/<name>
 
 ```bash
 base=$(git rev-parse main)
-comm -23 <(git show $base:CHANGELOG.md | sort) <(sort CHANGELOG.md)
+comm -23 <(git show ${base}:CHANGELOG.md | sort) <(sort CHANGELOG.md)
 ```
+
+⚠ **`${base}`의 중괄호를 빼지 말 것.** zsh는 `$var:x`의 `:x`를 매개변수 수정자로 읽는다.
+`$base:PROGRESS.md`는 `:P`(realpath)가 걸려 `<절대경로><sha>ROGRESS.md`가 되고,
+`$base:app.js`는 `:a`, `$base:recognition.js`는 `:r`, `$base:utils.js`는 `:u`(SHA까지
+대문자가 된다), `$base:src/x`는 `:s`로 `bad substitution`이 난다. 무사한 것은
+`CHANGELOG.md`·`README.md`·`index.html`처럼 첫 글자가 수정자가 아닌 경우뿐이다.
+
+**실패 방식이 고약하다**: `git show`가 죽으면 빈 출력이 되고, 빈 쪽과 비교한 `comm -23`은
+0줄을 낸다. 그건 "소실 없음"과 똑같이 생겼다. **남의 작업이 통째로 사라져도 대조가 통과한다.**
+
 
   출력된 줄은 전부 **자기가 의도적으로 지운 것**이어야 한다. (C 세션만 해당)
 
@@ -1105,11 +1115,15 @@ git add README.md CHANGELOG.md docs/BACKLOG.md PROGRESS.md CLAUDE.md AGENTS.md
 git commit -m "docs: 필수 문서 정비" -- README.md CHANGELOG.md docs/BACKLOG.md PROGRESS.md CLAUDE.md AGENTS.md
 git rebase main
 base=$(git rev-parse main)
-comm -23 <(git show $base:PROGRESS.md | sort) <(sort PROGRESS.md)   # 소실 줄 전수 대조
+comm -23 <(git show ${base}:PROGRESS.md | sort) <(sort PROGRESS.md)   # 소실 줄 전수 대조
 git -C ~/Mac-Projects/live-caption merge --ff-only feat/docs
 ```
 
 `comm` 출력은 전부 **자기가 의도적으로 옮기거나 지운 줄**이어야 한다.
+
+⚠ **`${base}`의 중괄호가 필수다**(§3 경고). `$base:PROGRESS.md`로 쓰면 zsh가 `:P`를
+realpath 수정자로 읽어 `git show`가 죽고, 빈 출력과 비교한 `comm`이 0줄을 내
+**소실이 없는 것처럼 보인다.**
 
 - [ ] **Step 8: 보고서를 쓴다**
 
