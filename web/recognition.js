@@ -18,7 +18,12 @@ export function createRecognizer({
   startRetryDelayMs = 250,
   maxStartRetries = 5,
   stopTimeoutMs = 2000,
-  timers = { setTimeout, clearTimeout },
+  // 브라우저의 setTimeout은 this가 window가 아니면 Illegal invocation으로 거부한다
+  // (Chrome 152 실측). 그래서 그대로 담지 않고 호출을 감싼다.
+  timers = {
+    setTimeout: (fn, ms) => setTimeout(fn, ms),
+    clearTimeout: (id) => clearTimeout(id),
+  },
 } = {}) {
   let rec = null;
   let status = 'idle';

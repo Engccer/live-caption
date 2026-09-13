@@ -256,3 +256,26 @@ test('정지 요청 뒤 브라우저가 aborted를 먼저 보내도 오류로 �
   assert.equal(events.filter((e) => e.type === 'error').length, 0);
   assert.equal(recognizer.getStatus(), 'idle');
 });
+
+test('timers를 주입하지 않아도 기본 타이머로 복구한다', async () => {
+  // ⚠ 이 테스트는 기본 타이머 경로가 도는지만 본다.
+  // 브라우저는 this가 window가 아닌 setTimeout 호출을 Illegal invocation으로 거부하는데
+  // (Chrome 152 실측) Node의 setTimeout에는 그 검사가 없어 여기서는 재현되지 않는다.
+  // 그래서 기본값은 호출을 감싸 두고, 실제 확인은 브라우저에서 한다.
+  const { FakeSpeechRecognition, instances } = createFakeRecognition();
+  const recognizer = createRecognizer({
+    SpeechRecognitionCtor: FakeSpeechRecognition,
+    onEvent: () => {},
+    restartDelayMs: 1,
+  });
+
+  recognizer.start();
+  instances[0].emitEnd();
+  assert.equal(recognizer.getStatus(), 'recovering');
+
+  await new Promise((resolve) => setTimeout(resolve, 20));
+
+  assert.equal(instances.length, 2, '기본 타이머로 재시작이 예약되고 실행된다');
+  assert.equal(recognizer.getStatus(), 'listening');
+  recognizer.stop();
+});
