@@ -4,7 +4,7 @@
 
 상용 STT 선택에 쓸 재현 가능한 한국어 기준선과 조건별 보조 자료다.
 원음·전사·화자별 정보는 `$LIVE_CAPTION_EVAL_DATA/public/`에만 둔다.
-기본값은 `~/live-caption-eval/public/`이며 공개 저장소에는 자료 본문을 싣지 않는다.
+기본값은 `~/Mac-Projects/live-caption-data/eval/public/`이며 공개 저장소에는 자료 본문을 싣지 않는다.
 수집일은 2026-09-14다. 수집 명령과 JSONL 계약은 [도구 사용법](../tools/README.md)이 정본이다.
 
 **한국어 6종 43,415개 음성, 124.13시간을 실제 확보했다.** 영어 AMI를 포함하면

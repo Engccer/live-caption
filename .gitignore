@@ -18,7 +18,7 @@ spike/real/
 docs/private/
 .playwright-mcp/
 
-# 실녹음 eval 자료는 저장소 밖에 둔다($LIVE_CAPTION_EVAL_DATA, 기본 ~/live-caption-eval).
+# 실녹음 eval 자료는 저장소 밖에 둔다($LIVE_CAPTION_EVAL_DATA, 기본 ~/Mac-Projects/live-caption-data/eval).
 # 아래는 실수로 저장소 안에 만들었을 때를 위한 안전망이다. eval/ 아래 커밋되는 것은
 # MANIFEST.md(집계 수치와 판정만)와 tools/(발화 내용 없음)뿐이다.
 eval/**/audio/

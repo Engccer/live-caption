@@ -35,7 +35,7 @@
 ## 저장과 재현
 
 음원, 전사, 개별 화자 정보는 저장소 밖 `$LIVE_CAPTION_EVAL_DATA/public/ami/`에만 둔다.
-기본 자료 루트는 `~/live-caption-eval`이다.
+기본 자료 루트는 `~/Mac-Projects/live-caption-data/eval`이다.
 
 ```bash
 python3 eval/tools/collect_ami.py --workers 4

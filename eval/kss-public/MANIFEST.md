@@ -22,7 +22,7 @@
 
 2026-09-14 수집 결과다. 원본 ZIP, 메타데이터, 다운로드 영수증, 해제한 파일,
 참조 JSONL과 검증 요약은 모두 저장소 밖 `$LIVE_CAPTION_EVAL_DATA/public/kss/`
-(기본 `~/live-caption-eval/public/kss/`)에 있다.
+(기본 `~/Mac-Projects/live-caption-data/eval/public/kss/`)에 있다.
 
 | 항목 | 실측 |
 |---|---:|

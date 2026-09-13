@@ -21,7 +21,7 @@
 취급 규칙」). 위치는 환경변수로 받는다.
 
 ```bash
-export LIVE_CAPTION_EVAL_DATA=~/live-caption-eval   # 기본값
+export LIVE_CAPTION_EVAL_DATA=~/Mac-Projects/live-caption-data/eval   # 기본값
 ```
 
 세트마다 `$LIVE_CAPTION_EVAL_DATA/<세트>/{audio,ref,baseline}/` 구조다.
@@ -31,7 +31,7 @@ export LIVE_CAPTION_EVAL_DATA=~/live-caption-eval   # 기본값
 ## 쓰는 순서
 
 ```bash
-D=${LIVE_CAPTION_EVAL_DATA:-~/live-caption-eval}
+D=${LIVE_CAPTION_EVAL_DATA:-~/Mac-Projects/live-caption-data/eval}
 
 # 1. 전사 (시각 포함)
 python ${SPEECH_TOOLKIT:-~/Mac-Projects/speech-toolkit}/STT/deepgram_stt.py <오디오.wav> --lang ko --timestamps
@@ -88,7 +88,7 @@ python3 -m unittest discover -s eval/tools -p 'test_*.py'
 ```
 
 공개 자료도 `$LIVE_CAPTION_EVAL_DATA/public/<자료>/`에 둔다. 기본 경로는
-`~/live-caption-eval/public/`이며, 저장소 안을 지정하거나 심볼릭 링크로 우회하면 거부한다.
+`~/Mac-Projects/live-caption-data/eval/public/`이며, 저장소 안을 지정하거나 심볼릭 링크로 우회하면 거부한다.
 원본은 `raw/`, 추출본은 `extracted/`, 한국어 5종의 정답은 `ref/<split>.jsonl`이다.
 KSS 정답은 `refs.jsonl`, AMI 발화 구간은 `ref/<회의>.segments.json`과 RTTM이다.
 음성 경로는 **해당 자료 폴더 기준 상대 경로**다.
@@ -110,7 +110,7 @@ Range 다운로드만 원본 식별자와 조각별 해시를 확인해 재개�
 저장한다. 결과가 없었던 발화도 `text`를 빈 문자열로 남긴다. ID 누락·추가·중복은 실패다.
 
 ```bash
-D=${LIVE_CAPTION_EVAL_DATA:-~/live-caption-eval}
+D=${LIVE_CAPTION_EVAL_DATA:-~/Mac-Projects/live-caption-data/eval}
 python3 eval/tools/score_cases.py \
   --ref "$D/public/fleurs-ko/ref/test.jsonl" \
   --hyp "$D/public/fleurs-ko/baseline/engine-test.jsonl"

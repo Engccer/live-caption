@@ -137,7 +137,7 @@ iOS 앱은 그다음이다.
 - 새 실녹음으로 검증할 때도 같은 규칙을 지킨다. 발화 내용은 어떤 산출물에도 남기지 않는다.
 - **"넣지 않는다"는 커밋만이 아니라 작업 디렉터리까지다.** 이 저장소는 공개돼 있고 포크를
   전제로 만들었다. gitignore로 가린 채 작업 디렉터리에 두면 규칙 한 줄이 바뀌는 순간
-  공개된다. 자료는 `$LIVE_CAPTION_EVAL_DATA`(기본 `~/live-caption-eval`) 아래 두고
+  공개된다. 자료는 `$LIVE_CAPTION_EVAL_DATA`(기본 `~/Mac-Projects/live-caption-data/eval`) 아래 두고
   도구에 경로를 넘긴다. ⚠ 2026-09-14에 이것을 어겨 `eval/*/audio|ref|baseline`에 넣었다가
   같은 날 되돌렸다. gitignore는 안전망으로 남겨 뒀을 뿐 그것이 규칙을 만족시키지 않는다.
 - **저장소에 남는 eval 산출물은 `eval/<세트>/MANIFEST.md`와 `eval/tools/`뿐이다.**

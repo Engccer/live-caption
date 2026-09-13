@@ -23,7 +23,7 @@ def outside_repo(path):
 
 
 def data_root(root=None):
-    root = outside_repo(root or os.environ.get('LIVE_CAPTION_EVAL_DATA', '~/live-caption-eval'))
+    root = outside_repo(root or os.environ.get('LIVE_CAPTION_EVAL_DATA', '~/Mac-Projects/live-caption-data/eval'))
     root.mkdir(parents=True, exist_ok=True)
     return root
 

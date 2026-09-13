@@ -5,7 +5,7 @@ eval 자료로 쓸 수 있는지 검토한 기록이다. 2026-09-14 측정.
 
 발화 내용은 이 파일에 남기지 않는다(CLAUDE.md 「테스트 음원 취급 규칙」).
 **자료 본체는 이 저장소에 없다.** `$LIVE_CAPTION_EVAL_DATA/<세트>/{audio,ref,baseline}/`에
-두며 기본 위치는 `~/live-caption-eval`이다. 저장소에 남는 것은 이 MANIFEST와 `eval/tools/`뿐이다.
+두며 기본 위치는 `~/Mac-Projects/live-caption-data/eval`이다. 저장소에 남는 것은 이 MANIFEST와 `eval/tools/`뿐이다.
 
 ## 왜 이 자료를 보게 됐나
 
