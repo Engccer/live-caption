@@ -204,9 +204,19 @@ export function createRecognizer(deps);
   startRetryDelayMs: 250,
   maxStartRetries: 5,
   stopTimeoutMs: 2000,
-  timers: { setTimeout, clearTimeout },
+  timers: { setTimeout, clearTimeout },   // ⚠ 테스트에서만. 아래 경고를 볼 것
 }
 ```
+
+⚠ **`app.js`는 `timers`를 넘기지 않는다**(2026-09-13 Chrome 152 실측). 위 형태를 브라우저에서
+그대로 넘기면 `TypeError: Illegal invocation`으로 죽는다. 브라우저의 `setTimeout`은 `Window`의
+메서드라 호출 시 `this`가 진짜 `Window`인지 검사하는데, 평범한 객체에 담아
+`timers.setTimeout(...)`으로 부르면 `this`가 그 객체가 되어 거부된다.
+
+**Node에는 이 검사가 없어 `node --test`는 전부 통과한다.** 게다가 피해가 재시작 예약에서만
+나므로, 아이폰에서 40초 뒤 첫 끊김이 왔을 때 자막이 조용히 멈추고 화면에는 아무 오류도 뜨지
+않는다. `recognition.js`의 기본값이 호출을 감싸 두므로 **넘기지 않는 것이 정답**이고,
+굳이 넘겨야 하면 감싸서 넘긴다.
 
 `onEvent`가 받는 사건은 넷이다.
 
@@ -224,10 +234,20 @@ export function createRecognizer(deps);
 
 - `permission-denied`: 자동 재시작을 하지 않는다. 같은 오류가 무한히 반복된다.
   상태 줄에 "마이크를 허용해 주세요"를 띄운다.
-- `no-speech`: **오류로 취급하지 않는다.** 조용한 회의에서 정상적으로 발생하며
-  (실측에서 `aborted: No speech detected` 형태로 관찰됐다), 상태 줄을 오류 문구로
-  바꾸면 사용자가 고장으로 오해한다. `error` 사건은 내되 `app.js`는 상태 줄을 건드리지
-  않고 평소의 끊김 복구 절차로 처리한다.
+- `no-speech`: **오류로 취급하지 않는다.** 조용한 회의에서 정상적으로 발생한다.
+  `error` 사건은 내되 `app.js`는 상태 줄을 건드리지 않고 평소의 끊김 복구 절차로 처리한다.
+- ⚠ **`unknown`도 상태 줄을 건드리지 않는다**(2026-09-13 판정). 아이폰은 침묵을 `no-speech`가
+  아니라 **`aborted` + 메시지 `No speech detected`**로 보내므로 우리 매핑에서 `unknown`이 된다.
+  이것을 상태 줄에 띄우면 조용한 교무회의에서 **40초마다 오류 문구가 뜬다**(`PROGRESS.md` 실측:
+  487초에 12회 끊김). **상태 줄을 바꾸는 오류는 `permission-denied`와 `not-supported` 둘뿐이다.**
+  나머지는 `status` 사건이 주는 `recovering`("연결이 끊겨 복구하는 중입니다")이 이미 덮는다.
+
+  메시지 문자열을 보고 `aborted`를 `no-speech`로 접는 대안은 기각했다. 브라우저 문구가 바뀌면
+  조용히 깨지고, 계약을 바꾸는 일이기도 하다.
+
+  ⚠ **이 결정의 대가**: 진짜 장애(`network` 등)도 상태 줄에 뜨지 않는다. 자막이 안 나오는데
+  화면은 "복구하는 중"만 보여 준다. 1차는 단순함을 택하고, 실사용에서 이 상황이 실제로
+  혼란을 주는지 확인한 뒤 재검토한다(`docs/BACKLOG.md`).
 - `aborted`: 정지·재시작 과정에서 정상적으로 발생한다. 우리가 의도한 중단이면 사건을
   내지 않고, 그렇지 않으면 `unknown`으로 올린다.
 
