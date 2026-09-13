@@ -148,7 +148,9 @@ web/
     recognition.test.js
 ```
 
-테스트는 `node --test web/test/`로 돈다. 브라우저가 필요 없다. 스파이크가 쓰던
+테스트는 `web/` 디렉터리에서 `node --test`로 돈다. 브라우저가 필요 없다.
+⚠ `node --test web/test/`처럼 **디렉터리를 인자로 주면 Node 26이 모듈로 해석해
+`MODULE_NOT_FOUND`로 죽는다.** 테스트가 실패한 것처럼 보이지만 돌지도 않은 것이다. 스파이크가 쓰던
 "HTML에서 정규식으로 `<script>`를 뜯어 `vm`에 넣는" 방식은 버린다. 모듈이 분리되면
 그냥 `import`하면 된다.
 
