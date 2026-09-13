@@ -35,3 +35,39 @@ export function createCaptionStore() {
     },
   };
 }
+
+// --- 글자 크기 ---
+
+export const FONT_STEPS = [20, 24, 28, 34, 40, 48]; // px, 오름차순
+export const DEFAULT_FONT_SIZE = 28;
+const FONT_SIZE_KEY = 'maldongmu.fontSize';
+
+// 위로는 지금보다 큰 첫 단계, 아래로는 지금보다 작은 첫 단계.
+// 그런 단계가 없으면 지금 값을 그대로 둔다.
+export function nextFontSize(current, step) {
+  const found = step > 0
+    ? FONT_STEPS.find((size) => size > current)
+    : [...FONT_STEPS].reverse().find((size) => size < current);
+  return found ?? current;
+}
+
+// 저장값이 없거나 손상됐거나 단계 목록 밖이면 기본값을 준다.
+// 저장소 접근 자체가 막힌 경우(사파리 비공개 모드)도 마찬가지다.
+export function loadFontSize(storage) {
+  try {
+    const saved = Number(storage.getItem(FONT_SIZE_KEY));
+    return FONT_STEPS.includes(saved) ? saved : DEFAULT_FONT_SIZE;
+  } catch {
+    return DEFAULT_FONT_SIZE;
+  }
+}
+
+// 저장에 실패해도 삼킨다. 글자 크기를 기억하지 못하는 것이
+// 자막이 멈추는 것보다 훨씬 가볍다.
+export function saveFontSize(storage, px) {
+  try {
+    storage.setItem(FONT_SIZE_KEY, String(px));
+  } catch {
+    // 무시한다.
+  }
+}
