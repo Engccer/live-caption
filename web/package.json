@@ -1,0 +1,9 @@
+{
+  "name": "maldongmu-web",
+  "private": true,
+  "type": "module",
+  "description": "말동무 웹앱. 의존성 없음. 빌드 없음.",
+  "scripts": {
+    "test": "node --test"
+  }
+}
