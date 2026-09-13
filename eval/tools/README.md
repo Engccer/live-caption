@@ -8,28 +8,42 @@
 | `verify_align.py` | 정렬 결과를 검증한다. 각 줄의 시각에서 전사를 꺼내 내용이 맞는지 3-gram으로 재고 역행·끝단을 확인한다 |
 | `score.py` | 정답과 전사의 CER/WER을 정규화 단계별로 낸다 |
 
+## 자료는 저장소 밖에 있다
+
+음성과 속기록은 실제 회의 기록이라 **이 저장소에 두지 않는다**(CLAUDE.md 「테스트 음원
+취급 규칙」). 위치는 환경변수로 받는다.
+
+```bash
+export LIVE_CAPTION_EVAL_DATA=~/live-caption-eval   # 기본값
+```
+
+세트마다 `$LIVE_CAPTION_EVAL_DATA/<세트>/{audio,ref,baseline}/` 구조다.
+저장소의 `eval/<세트>/MANIFEST.md`가 그 자료의 원본 경로·실측·판정을 기록한다.
+
 ## 쓰는 순서
 
 ```bash
+D=${LIVE_CAPTION_EVAL_DATA:-~/live-caption-eval}
+
 # 1. 전사 (시각 포함)
-python ~/Mac-Projects/speech-toolkit/STT/deepgram_stt.py <오디오.wav> --lang ko --timestamps
+python ${SPEECH_TOOLKIT:-~/Mac-Projects/speech-toolkit}/STT/deepgram_stt.py <오디오.wav> --lang ko --timestamps
 
 # 2. 정렬
 python eval/tools/align.py \
-  --steno eval/<세트>/ref/stenograph.txt \
+  --steno $D/<세트>/ref/stenograph.txt \
   --ts <오디오>_deepgram_ts.txt \
-  --out eval/<세트>/ref/aligned.tsv
+  --out $D/<세트>/ref/aligned.tsv
 
 # 3. 검증 (반드시 한다. 정렬은 틀려도 조용히 틀린다)
 python eval/tools/verify_align.py \
-  --aligned eval/<세트>/ref/aligned.tsv \
+  --aligned $D/<세트>/ref/aligned.tsv \
   --ts <오디오>_deepgram_ts.txt \
   --duration <초>
 
 # 4. 채점
 python eval/tools/score.py \
-  --ref eval/<세트>/ref/stenograph.txt \
-  --hyp eval/<세트>/baseline/<엔진>.txt
+  --ref $D/<세트>/ref/stenograph.txt \
+  --hyp $D/<세트>/baseline/<엔진>.txt
 ```
 
 ## 함정

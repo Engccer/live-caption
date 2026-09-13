@@ -6,7 +6,8 @@
 웹앱으로 시작한다. 브라우저에 들어 있는 음성 인식(Web Speech API)을 쓰므로 설치할 것이 없고,
 그래서 링크 하나로 건네줄 수 있다. iOS 네이티브 앱은 그다음 단계다.
 
-음성은 브라우저의 인식 서비스로 전송되어 처리된다. 기기 안에서만 도는 것이 아니다.
+음성은 브라우저의 인식 서비스로 전송되어 처리된다. 기기 안에서만 도는 것이 아니다
+(데스크톱 크롬은 한국어 팩을 내려받으면 기기 안에서 처리할 수 있다).
 
 **https://engccer.github.io/live-caption/**
 
@@ -45,6 +46,7 @@ cd web && node --test
 | [PROGRESS.md](PROGRESS.md) | 지금 참인 상태, 확정된 결정, 알려진 한계 |
 | [docs/BACKLOG.md](docs/BACKLOG.md) | 미결 결정, 남은 검증 과제, 뒤집힌 결정 |
 | [CHANGELOG.md](CHANGELOG.md) | 날짜별 변경 |
+| [eval/tools/](eval/tools/README.md) | 실녹음으로 인식 엔진을 채점하는 절차 |
 | [웹앱 1차 설계](docs/superpowers/specs/2026-09-13-maldongmu-web-v1-design.md) | 화면·상태·인터페이스 계약 |
 | [실시간 STT 스파이크](docs/spike-2026-09-03-realtime-stt.md) | 프로바이더 실호출 측정 전문 |
 | [docs/research/](docs/research/) | 국내 프로바이더·국제 오픈소스·국내 시장 조사 |
