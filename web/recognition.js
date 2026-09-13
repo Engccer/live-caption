@@ -3,6 +3,13 @@
 //
 // 수치와 절차는 spike/web/index.html에서 실측으로 얻은 것을 옮겼다.
 
+// Web Speech의 error 코드를 우리 사건의 kind로 접는다.
+const ERROR_KINDS = {
+  'not-allowed': 'permission-denied',
+  'service-not-allowed': 'permission-denied',
+  'no-speech': 'no-speech',
+};
+
 export function createRecognizer({
   SpeechRecognitionCtor,
   onEvent = () => {},
@@ -18,6 +25,8 @@ export function createRecognizer({
   let running = false;    // 사용자가 시작을 눌러 둔 상태인가
   let generation = 0;     // 버린 인식 객체의 지각 이벤트를 거르는 세대 번호
   let restartTimer = null;
+  let stopTimer = null;
+  let stopping = false;   // 우리가 정지를 요청해 end를 기다리는 중인가
 
   function setStatus(next) {
     if (status === next) return;   // 바뀔 때만 알린다
@@ -51,6 +60,18 @@ export function createRecognizer({
         }
       }
       if (interim) onEvent({ type: 'interim', text: interim });
+    });
+
+    r.onerror = current((e) => {
+      // aborted는 정지·재시작 과정에서 정상적으로 난다. 우리가 의도한 것이면 알리지 않는다.
+      if (e.error === 'aborted' && (stopping || !running)) return;
+
+      const kind = ERROR_KINDS[e.error] ?? 'unknown';
+      onEvent({ type: 'error', kind, message: e.message ?? '' });
+
+      // 같은 오류가 무한히 반복되므로 자동 재시작을 포기한다.
+      // no-speech는 조용한 회의에서 정상적으로 나므로 여기 걸리지 않는다.
+      if (kind === 'permission-denied') running = false;
     });
 
     r.onend = current(() => {
@@ -100,6 +121,11 @@ export function createRecognizer({
       timers.clearTimeout(restartTimer);
       restartTimer = null;
     }
+    if (stopTimer !== null) {
+      timers.clearTimeout(stopTimer);
+      stopTimer = null;
+    }
+    stopping = false;
     running = false;
     rec = null;
     generation++;   // 이 뒤에 오는 옛 객체의 이벤트는 전부 막힌다
@@ -118,6 +144,7 @@ export function createRecognizer({
     if (running) return;
 
     running = true;
+    stopping = false;
     generation++;
     rec = build(generation);
     rec.start();
@@ -126,12 +153,26 @@ export function createRecognizer({
   function stop() {
     if (!running) return;
     running = false;
+    stopping = true;
     if (restartTimer !== null) {
       timers.clearTimeout(restartTimer);
       restartTimer = null;
     }
-    if (rec) rec.stop();
-    else finish();
+    if (!rec) {
+      finish();
+      return;
+    }
+    setStatus('stopping');
+    // end가 끝내 오지 않는 브라우저가 있다. 기다리다 스스로 끝낸다.
+    stopTimer = timers.setTimeout(() => {
+      stopTimer = null;
+      if (stopping) finish();
+    }, stopTimeoutMs);
+    try {
+      rec.stop();
+    } catch {
+      finish();
+    }
   }
 
   return { start, stop, getStatus: () => status };
