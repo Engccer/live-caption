@@ -38,6 +38,20 @@ export function createRecognizer({
 
     r.onstart = current(() => setStatus('listening'));
 
+    // 브라우저는 results를 누적해 보내고 resultIndex로 새 것을 가리킨다.
+    r.onresult = current((e) => {
+      let interim = '';
+      for (let i = e.resultIndex; i < e.results.length; i++) {
+        const text = e.results[i][0].transcript.trim();
+        if (e.results[i].isFinal) {
+          if (text) onEvent({ type: 'final', text });
+        } else if (text) {
+          interim += (interim ? ' ' : '') + text;
+        }
+      }
+      if (interim) onEvent({ type: 'interim', text: interim });
+    });
+
     return r;
   }
 
