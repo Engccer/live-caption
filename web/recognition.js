@@ -17,6 +17,7 @@ export function createRecognizer({
   let status = 'idle';
   let running = false;    // 사용자가 시작을 눌러 둔 상태인가
   let generation = 0;     // 버린 인식 객체의 지각 이벤트를 거르는 세대 번호
+  let restartTimer = null;
 
   function setStatus(next) {
     if (status === next) return;   // 바뀔 때만 알린다
@@ -52,7 +53,40 @@ export function createRecognizer({
       if (interim) onEvent({ type: 'interim', text: interim });
     });
 
+    r.onend = current(() => {
+      if (running) scheduleRestart(activeGeneration);
+      else finish();
+    });
+
     return r;
+  }
+
+  // iOS Safari는 end 직후 이전 캡처 소스를 정리하는 동안 새 소스를 열면
+  // audiostart만 오고 실제 오디오가 전달되지 않는다. 그래서 기다렸다 연다.
+  function scheduleRestart(activeGeneration) {
+    if (!running || activeGeneration !== generation || restartTimer !== null) return;
+    setStatus('recovering');
+    restartTimer = timers.setTimeout(() => {
+      restartTimer = null;
+      restart(activeGeneration);
+    }, restartDelayMs);
+  }
+
+  function restart(activeGeneration) {
+    if (!running || activeGeneration !== generation) return;
+    rec = build(activeGeneration);
+    rec.start();
+  }
+
+  function finish() {
+    if (restartTimer !== null) {
+      timers.clearTimeout(restartTimer);
+      restartTimer = null;
+    }
+    running = false;
+    rec = null;
+    generation++;   // 이 뒤에 오는 옛 객체의 이벤트는 전부 막힌다
+    setStatus('idle');
   }
 
   function start() {
@@ -73,7 +107,14 @@ export function createRecognizer({
   }
 
   function stop() {
+    if (!running) return;
     running = false;
+    if (restartTimer !== null) {
+      timers.clearTimeout(restartTimer);
+      restartTimer = null;
+    }
+    if (rec) rec.stop();
+    else finish();
   }
 
   return { start, stop, getStatus: () => status };

@@ -67,3 +67,43 @@ test('resultIndex 앞의 결과는 다시 내지 않는다', () => {
 
   assert.deepEqual(events, [{ type: 'final', text: '새 문장' }]);
 });
+
+test('사용자가 정지하지 않았는데 끊기면 recovering이 되고 5초 뒤 다시 시작한다', () => {
+  const { recognizer, instances, events, clock } = setup();
+  recognizer.start();
+  events.length = 0;
+
+  instances[0].emitEnd();
+  assert.equal(recognizer.getStatus(), 'recovering');
+  assert.deepEqual(events, [{ type: 'status', status: 'recovering' }]);
+
+  clock.advance(4999);
+  assert.equal(instances.length, 1, '5초 전에는 새 인식을 만들지 않는다');
+
+  clock.advance(1);
+  assert.equal(instances.length, 2);
+  assert.equal(recognizer.getStatus(), 'listening');
+});
+
+test('사용자가 정지하면 다시 시작하지 않는다', () => {
+  const { recognizer, instances, clock } = setup();
+  recognizer.start();
+  recognizer.stop();
+
+  clock.advance(60000);
+  assert.equal(instances.length, 1);
+  assert.equal(recognizer.getStatus(), 'idle');
+});
+
+test('복구를 반복해도 인식이 계속 이어진다', () => {
+  const { recognizer, instances, clock } = setup();
+  recognizer.start();
+
+  for (let i = 0; i < 3; i++) {
+    instances.at(-1).emitEnd();
+    clock.advance(5000);
+  }
+
+  assert.equal(instances.length, 4);
+  assert.equal(recognizer.getStatus(), 'listening');
+});
