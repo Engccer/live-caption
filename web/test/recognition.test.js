@@ -137,3 +137,32 @@ test('start()가 계속 실패하면 5회까지 시도하고 오류를 낸다', 
   assert.equal(errors[0].kind, 'unknown');
   assert.equal(recognizer.getStatus(), 'idle');
 });
+
+test('버린 인식 객체의 뒤늦은 결과는 무시한다', () => {
+  const { recognizer, instances, events, clock } = setup();
+  recognizer.start();
+  const dead = instances[0];
+
+  dead.emitEnd();
+  clock.advance(5000);          // 새 인식으로 교체됨
+  events.length = 0;
+
+  dead.emitResult([{ text: '유령 문장', isFinal: true }]);
+  dead.emitEnd();
+
+  assert.deepEqual(events, [], '버린 객체의 사건은 새 세션에 닿지 않는다');
+  assert.equal(recognizer.getStatus(), 'listening');
+});
+
+test('정지한 뒤 옛 인식이 끊겨도 다시 시작하지 않는다', () => {
+  const { recognizer, instances, clock } = setup();
+  recognizer.start();
+  const dead = instances[0];
+  recognizer.stop();
+
+  dead.emitEnd();
+  clock.advance(10000);
+
+  assert.equal(instances.length, 1);
+  assert.equal(recognizer.getStatus(), 'idle');
+});
