@@ -42,3 +42,7 @@ cd web && node --test
 | [웹앱 1차 설계](docs/superpowers/specs/2026-09-13-maldongmu-web-v1-design.md) | 화면·상태·인터페이스 계약 |
 | [실시간 STT 스파이크](docs/spike-2026-09-03-realtime-stt.md) | 프로바이더 실호출 측정 전문 |
 | [docs/research/](docs/research/) | 국내 프로바이더·국제 오픈소스·국내 시장 조사 |
+
+## 라이선스
+
+MIT. 가져다 쓰고 고치고 다시 배포해도 된다. 저작권 표시만 남기면 된다.
