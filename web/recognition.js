@@ -150,6 +150,11 @@ export function createRecognizer({
 
     running = true;
     stopping = false;
+    // 앞선 정지가 걸어 둔 타임아웃을 버린다. 남겨 두면 다음 정지를 앞당겨 끝낸다.
+    if (stopTimer !== null) {
+      timers.clearTimeout(stopTimer);
+      stopTimer = null;
+    }
     generation++;
     rec = build(generation);
     rec.start();

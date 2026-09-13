@@ -279,3 +279,26 @@ test('timers를 주입하지 않아도 기본 타이머로 복구한다', async 
   assert.equal(recognizer.getStatus(), 'listening');
   recognizer.stop();
 });
+
+test('정지 중에 다시 시작했다 정지하면 앞선 타임아웃이 끼어들지 않는다', () => {
+  const { recognizer, instances, clock } = setup();
+  // end를 내지 않는 인식 객체를 흉내 내 정지 타임아웃 경로를 태운다.
+  const swallowEnd = (r) => { r.stop = () => { r.started = false; }; };
+
+  recognizer.start();
+  swallowEnd(instances[0]);
+  recognizer.stop();            // t=0. 이때 잡힌 타임아웃은 t=2000에 불린다
+
+  clock.advance(500);
+  recognizer.start();           // t=500. 사용자가 마음을 바꿔 다시 시작
+  swallowEnd(instances[1]);
+
+  clock.advance(500);
+  recognizer.stop();            // t=1000. 이때 잡힌 타임아웃은 t=3000
+
+  clock.advance(1000);          // t=2000. 버려졌어야 할 옛 타임아웃 자리
+  assert.equal(recognizer.getStatus(), 'stopping', '옛 타임아웃이 정지를 앞당기지 않는다');
+
+  clock.advance(1000);          // t=3000
+  assert.equal(recognizer.getStatus(), 'idle');
+});
