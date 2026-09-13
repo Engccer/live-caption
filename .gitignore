@@ -17,3 +17,9 @@ spike/real/
 .vercel/
 docs/private/
 .playwright-mcp/
+
+# 실녹음 eval 자료 (발화 내용 포함, CLAUDE.md 테스트 음원 취급 규칙)
+# MANIFEST.md만 커밋한다 - 집계 수치와 판정만 담고 발화 내용은 담지 않는다.
+eval/**/audio/
+eval/**/ref/
+eval/**/baseline/
