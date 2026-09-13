@@ -165,3 +165,11 @@ test('임계값을 직접 줄 수 있다', () => {
 test('내용이 화면보다 짧으면 따라간다', () => {
   assert.equal(shouldAutoScroll({ scrollTop: 0, scrollHeight: 150, clientHeight: 200 }), true);
 });
+
+test('공백뿐인 중간 결과는 빈 문자열로 만든다', () => {
+  // 글자 없는 중간 결과가 들어오면 화면에서 빈 줄이 나타났다 사라지며
+  // 자막 영역이 들썩인다. 읽던 자리를 잃게 만든다.
+  const store = createCaptionStore();
+  store.setInterim('   ');
+  assert.equal(store.getState().interim, '');
+});

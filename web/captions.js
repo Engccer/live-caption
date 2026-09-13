@@ -15,8 +15,10 @@ export function createCaptionStore() {
     },
 
     // 중간 결과를 교체한다. 누적하지 않는다.
+    // 공백뿐이면 빈 문자열로 만든다. 글자 없는 중간 결과가 화면에서
+    // 빈 줄로 나타났다 사라지면 읽던 자리를 잃는다.
     setInterim(text) {
-      interim = String(text ?? '');
+      interim = String(text ?? '').trim();
     },
 
     clear() {
