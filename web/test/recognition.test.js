@@ -302,3 +302,110 @@ test('정지 중에 다시 시작했다 정지하면 앞선 타임아웃이 끼�
   clock.advance(1000);          // t=3000
   assert.equal(recognizer.getStatus(), 'idle');
 });
+
+test('첫 start()가 InvalidStateError를 던져도 호출자에게 새지 않는다', () => {
+  const { recognizer, instances, events, clock } = setup({
+    onStart: (nth) => (nth === 1 ? 'throw-invalid-state' : undefined),
+  });
+
+  recognizer.start();   // 여기서 던지면 app.js의 클릭 핸들러로 예외가 올라간다
+  assert.equal(events.filter((e) => e.type === 'error').length, 0, '아직 포기하지 않는다');
+
+  clock.advance(250);
+  assert.equal(recognizer.getStatus(), 'listening');
+  assert.equal(instances.length, 2);
+});
+
+test('첫 start()가 계속 실패하면 오류를 내고 다시 시작할 수 있는 상태로 남는다', () => {
+  const { recognizer, events, clock } = setup({ onStart: () => 'throw-invalid-state' });
+
+  recognizer.start();
+  clock.advance(250 * 6);
+
+  const errors = events.filter((e) => e.type === 'error');
+  assert.equal(errors.length, 1);
+  assert.equal(errors[0].kind, 'unknown');
+  assert.equal(recognizer.getStatus(), 'idle', '갇히지 않고 다시 누를 수 있어야 한다');
+});
+
+test('복구를 기다리는 중에 정지하면 바로 끝난다', () => {
+  const { recognizer, instances, clock } = setup();
+  recognizer.start();
+  instances[0].emitEnd();                 // 끊김. 5초 복구 대기에 들어간다
+  assert.equal(recognizer.getStatus(), 'recovering');
+
+  recognizer.stop();
+  // 살아 있는 인식이 없으므로 end를 기다릴 이유가 없다.
+  assert.equal(recognizer.getStatus(), 'idle');
+
+  clock.advance(60000);
+  assert.equal(instances.length, 1, '정지했으므로 재시작하지 않는다');
+});
+
+test('start 재시도를 기다리는 중에 정지하면 바로 끝난다', () => {
+  const { recognizer, instances, clock } = setup({
+    onStart: (nth) => (nth >= 2 ? 'throw-invalid-state' : undefined),
+  });
+  recognizer.start();
+  instances[0].emitEnd();
+  clock.advance(5000);          // 재시작 시도가 던져 250ms 백오프에 들어간다
+  assert.equal(recognizer.getStatus(), 'recovering');
+
+  recognizer.stop();
+  assert.equal(recognizer.getStatus(), 'idle');
+
+  clock.advance(60000);
+  assert.equal(instances.length, 2, '백오프 타이머가 버려졌다');
+});
+
+test('정지가 끝나기 전에 다시 시작하면 옛 인식을 끊는다', () => {
+  const { recognizer, instances } = setup();
+  recognizer.start();
+  const first = instances[0];
+  // end를 늦게 주는 브라우저를 흉내 낸다. stop() 뒤에도 인식이 살아 있다.
+  first.stop = () => {};
+
+  recognizer.stop();
+  assert.equal(recognizer.getStatus(), 'stopping');
+
+  recognizer.start();
+  assert.equal(recognizer.getStatus(), 'listening');
+  assert.equal(instances.length, 2);
+  assert.equal(first.aborted, true, '옛 인식을 끊지 않으면 캡처 세션이 겹친다');
+});
+
+test('인식 객체에 회의용 설정을 건다', () => {
+  const { recognizer, instances } = setup();
+  recognizer.start();
+
+  const r = instances[0];
+  assert.equal(r.lang, 'ko-KR', '빠지면 브라우저 기본 언어로 인식한다');
+  assert.equal(r.continuous, true, 'false면 첫 문장 뒤 멈춘다');
+  assert.equal(r.interimResults, true, 'false면 중간 결과가 영영 오지 않는다');
+  assert.equal(r.maxAlternatives, 1);
+});
+
+test('lang은 주입한 값을 따른다', () => {
+  const clock = createFakeTimers();
+  const { FakeSpeechRecognition, instances } = createFakeRecognition();
+  const recognizer = createRecognizer({
+    SpeechRecognitionCtor: FakeSpeechRecognition,
+    onEvent: () => {},
+    timers: clock.timers,
+    lang: 'en-US',
+  });
+  recognizer.start();
+  assert.equal(instances[0].lang, 'en-US');
+});
+
+test('start 재시도는 기본값대로 여섯 번까지 시도한다', () => {
+  const { recognizer, instances, clock } = setup({
+    onStart: (nth) => (nth >= 2 ? 'throw-invalid-state' : undefined),
+  });
+  recognizer.start();
+  instances[0].emitEnd();
+  clock.advance(5000 + 250 * 6);
+
+  // 처음 만든 것 1개 + 재시작 시도 6번(attempt 0..5)
+  assert.equal(instances.length, 7);
+});

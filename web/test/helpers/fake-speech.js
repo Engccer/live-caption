@@ -61,7 +61,10 @@ export function createFakeRecognition({ onStart } = {}) {
       this.onstart?.();
     }
 
+    // 실제 브라우저는 시작되지 않은 인식의 stop()에 아무 일도 하지 않는다.
+    // 관대하게 굴면 "복구 중 정지"·"정지 중 재시작"의 결함을 가린다.
     stop() {
+      if (!this.started) return;
       this.started = false;
       this.onend?.();
     }

@@ -80,6 +80,9 @@ export function createRecognizer({
     });
 
     r.onend = current(() => {
+      // 끝난 인식은 더 이상 현재 인식이 아니다. 비워 두어야 복구를 기다리는 중에
+      // 정지했을 때 오지 않을 end를 2초씩 기다리지 않는다.
+      rec = null;
       if (running) scheduleRestart(activeGeneration);
       else finish();
     });
@@ -105,6 +108,7 @@ export function createRecognizer({
       rec = build(activeGeneration);
       rec.start();
     } catch (e) {
+      rec = null;   // 시작하지 못한 객체다. 붙들고 있으면 정지가 end를 기다린다
       if (attempt < maxStartRetries) {
         restartTimer = timers.setTimeout(() => {
           restartTimer = null;
@@ -148,6 +152,18 @@ export function createRecognizer({
     }
     if (running) return;
 
+    // 앞선 정지가 아직 안 끝났으면 옛 인식을 끊고 간다. 캡처 세션이 겹치면
+    // iOS에서 audio-capture 고장이 난다(PROGRESS.md 실측).
+    if (rec) {
+      const abandoned = rec;
+      rec = null;   // 먼저 비워야 abort가 부르는 end가 새 세션에 닿지 않는다
+      try {
+        abandoned.abort();
+      } catch {
+        // 이미 죽은 객체다. 무시한다
+      }
+    }
+
     running = true;
     stopping = false;
     // 앞선 정지가 걸어 둔 타임아웃을 버린다. 남겨 두면 다음 정지를 앞당겨 끝낸다.
@@ -156,8 +172,9 @@ export function createRecognizer({
       stopTimer = null;
     }
     generation++;
-    rec = build(generation);
-    rec.start();
+    // restart()에 맡긴다. 첫 start()도 InvalidStateError를 맞을 수 있고
+    // (사용자가 정지 직후 다시 눌렀을 때) 그때 필요한 백오프가 거기 있다.
+    restart(generation);
   }
 
   function stop() {
