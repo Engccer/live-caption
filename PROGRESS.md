@@ -7,8 +7,13 @@
 (`web/index.html`·`captions.js`·`recognition.js`·`app.js`) 의존성도 빌드도 서버도 없다.
 테스트 62개가 `web/`에서 `node --test`로 돈다.
 
+**https://engccer.github.io/live-caption/ 에 배포돼 있다.** GitHub Pages, MIT.
+홈 화면에 설치하면 주소창 없이 열린다(PWA).
+
 **아직 실기기에서 쓰지 않았다.** 확인은 데스크톱 크롬에서 가짜 인식기를 물려 한 것이고,
 실제 마이크와 아이폰 사파리에서는 시험하지 않았다. 화면 설계도 노트북 폭에서만 봤다.
+⚠ **iOS 홈 화면 앱(standalone)에서 음성 인식이 되는지 확인하지 않았다.** 아이폰의 홈 화면
+앱은 사파리와 다른 컨텍스트라 막힐 수 있다. 안 되면 `display`를 `browser`로 내린다.
 
 코드는 `web/`(1차 웹앱)과 `spike/`(프로바이더·Safari 측정 하네스) 둘이다.
 
