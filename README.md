@@ -8,6 +8,8 @@
 
 음성은 브라우저의 인식 서비스로 전송되어 처리된다. 기기 안에서만 도는 것이 아니다.
 
+**https://engccer.github.io/live-caption/**
+
 지금 어디까지 왔는지는 [PROGRESS.md](PROGRESS.md)에 있다.
 
 ## 실행
