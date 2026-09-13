@@ -107,3 +107,33 @@ test('복구를 반복해도 인식이 계속 이어진다', () => {
   assert.equal(instances.length, 4);
   assert.equal(recognizer.getStatus(), 'listening');
 });
+
+test('start()가 InvalidStateError를 던지면 250ms 뒤 다시 시도한다', () => {
+  // 2회차 start()만 던지게 한다.
+  const { recognizer, instances, clock } = setup({
+    onStart: (nth) => (nth === 2 ? 'throw-invalid-state' : undefined),
+  });
+  recognizer.start();
+  instances[0].emitEnd();
+  clock.advance(5000);          // 2회차 시도 -> 던짐
+
+  assert.equal(recognizer.getStatus(), 'recovering');
+  clock.advance(250);           // 3회차 시도 -> 성공
+  assert.equal(recognizer.getStatus(), 'listening');
+});
+
+test('start()가 계속 실패하면 5회까지 시도하고 오류를 낸다', () => {
+  const { recognizer, instances, events, clock } = setup({
+    onStart: (nth) => (nth >= 2 ? 'throw-invalid-state' : undefined),
+  });
+  recognizer.start();
+  events.length = 0;
+  instances[0].emitEnd();
+
+  clock.advance(5000 + 250 * 6);
+
+  const errors = events.filter((e) => e.type === 'error');
+  assert.equal(errors.length, 1);
+  assert.equal(errors[0].kind, 'unknown');
+  assert.equal(recognizer.getStatus(), 'idle');
+});

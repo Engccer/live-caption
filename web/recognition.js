@@ -72,10 +72,27 @@ export function createRecognizer({
     }, restartDelayMs);
   }
 
-  function restart(activeGeneration) {
+  // Safari는 end 직후 start()에 InvalidStateError를 내기도 한다. 짧게 물러서 재시도한다.
+  function restart(activeGeneration, attempt = 0) {
     if (!running || activeGeneration !== generation) return;
-    rec = build(activeGeneration);
-    rec.start();
+    try {
+      rec = build(activeGeneration);
+      rec.start();
+    } catch (e) {
+      if (attempt < maxStartRetries) {
+        restartTimer = timers.setTimeout(() => {
+          restartTimer = null;
+          restart(activeGeneration, attempt + 1);
+        }, startRetryDelayMs);
+        return;
+      }
+      onEvent({
+        type: 'error',
+        kind: 'unknown',
+        message: `인식을 다시 시작하지 못했습니다: ${e.name}`,
+      });
+      finish();
+    }
   }
 
   function finish() {
