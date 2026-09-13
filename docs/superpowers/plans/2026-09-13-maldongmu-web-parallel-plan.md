@@ -19,6 +19,10 @@
 - **이모지 금지**: UI 라벨·버튼·제목에 이모지를 쓰지 않는다. 아이콘도 1차에는 없다.
 - **em dash(`—`) 금지**: UI 문구와 사용자에게 보이는 텍스트에 쓰지 않는다. 코드·문서 본문은 무관.
 - **의존성 추가 금지**: `npm install`을 실행하지 않는다. 외부 패키지를 쓰지 않는다.
+- ⚠ **테스트가 초록불인 것과 그 테스트가 무언가를 지키는 것은 다른 명제다.** 계획이 준 테스트도
+  예외가 아니다(2026-09-13 실측: A6의 `aborted` 억제 테스트가 억제 코드를 지워도 통과했다).
+  **의심되면 지키려는 코드를 지우고 그 테스트가 빨간불이 되는지 본다.** 안 되면 그 테스트는
+  공허하고, 고쳐 쓴 뒤 그 사실을 보고서에 남긴다.
 - **테스트 실행은 `web/` 디렉터리에서 `node --test`**. ⚠ `node --test test/`처럼 **디렉터리를
   인자로 주면 Node 26이 그것을 모듈로 해석해 `MODULE_NOT_FOUND`로 죽는다.** 테스트 실패처럼
   보이지만 테스트는 돌지도 않은 것이다. 인자 없이 쓰거나 파일을 직접 지정한다
@@ -26,7 +30,11 @@
 - **`web/package.json`은 코디네이터가 이미 만들어 커밋했다. 고치지 않는다.**
 - **접근성**: 페이지 전체에서 live region은 `#status` 하나뿐이다. 자막 영역에 걸지 않는다.
   모든 버튼은 접근 가능한 이름을 갖고 터치 타깃 44px 이상, 보이는 포커스 표시를 둔다.
-- **커밋**: `git add -A` 금지. 반드시 경로를 지정해 커밋한다(`git commit -- <경로>`).
+- **커밋**: `git add -A` 금지. 반드시 경로를 지정해 커밋한다.
+  ⚠ **순서가 중요하다.** 올바른 형태는 `git commit -m "메시지" -- <경로>`이고,
+  `-m`을 `--` 뒤에 두면 그것까지 경로로 해석해 `pathspec '-m' did not match`로 죽는다.
+  ⚠ **새 파일은 `git add <경로>`가 먼저 필요하다.** 경로 지정 커밋은 이미 추적 중인 파일만 받는다.
+  이 프로젝트는 전부 새 파일이라 매번 걸린다.
   커밋 메시지 끝에 `Co-Authored-By: Claude Opus 5 (1M context) <noreply@anthropic.com>`를 붙인다.
 
 ---
@@ -93,7 +101,8 @@ git은 디렉터리를 추적하지 않는다.
 cd ~/live-caption-wt/<name>
 
 # 작업: 자기 브랜치에만, 경로 지정 커밋
-git commit -- web/recognition.js web/test/recognition.test.js -m "..."
+git add web/recognition.js web/test/recognition.test.js
+git commit -m "..." -- web/recognition.js web/test/recognition.test.js
 
 # 통합 (게이트 통과 후)
 git rebase main
@@ -320,14 +329,15 @@ cd ~/live-caption-wt/recognition/web && node --test test/recognition.test.js
 
 ```bash
 node --test test/recognition.test.js
-git commit -- web/recognition.js web/test/ -m "$(cat <<'MSG'
+git add web/recognition.js web/test/
+git commit -m "$(cat <<'MSG'
 feat(web): 인식 모듈 골격과 테스트 하네스
 
 가짜 타이머와 가짜 SpeechRecognition으로 브라우저 없이 검증한다.
 
 Co-Authored-By: Claude Opus 5 (1M context) <noreply@anthropic.com>
 MSG
-)"
+)" -- web/recognition.js web/test/
 ```
 
 ---
@@ -610,6 +620,21 @@ test('우리가 정지시켜 생긴 aborted는 오류로 내지 않는다', () =
   assert.equal(events.filter((e) => e.type === 'error').length, 0);
 });
 
+// ⚠ 위 테스트만으로는 부족하다(2026-09-13 세션 A 실측). 가짜 객체의 stop()이 onend를
+// 동기로 쏘는 바람에 억제 코드를 통째로 지워도 통과한다. 실제 브라우저는 aborted를 먼저
+// 보내고 end를 나중에 보내므로 그 순서를 재현하는 테스트가 따로 있어야 한다.
+test('브라우저 순서(aborted 먼저, end 나중)에서도 억제된다', () => {
+  const { recognizer, instances, events } = setup();
+  recognizer.start();
+  events.length = 0;
+  // end를 즉시 쏘지 않는 객체로 바꿔 실제 순서를 만든다.
+  instances[0].stop = () => { instances[0].started = false; };
+  recognizer.stop();
+  instances[0].emitError('aborted');
+  instances[0].emitEnd();
+  assert.equal(events.filter((e) => e.type === 'error').length, 0);
+});
+
 test('정지 뒤 end가 오지 않아도 2초 뒤 idle로 끝난다', () => {
   const { recognizer, instances, clock } = setup();
   recognizer.start();
@@ -661,7 +686,8 @@ node --test        # web/ 디렉터리에서. 이 세션의 모든 테스트가 
 - [ ] **Step 5: 커밋하고 통합한다**
 
 ```bash
-git commit -- web/recognition.js web/test/ -m "feat(web): 오류 매핑과 정지 타임아웃"
+git add web/recognition.js web/test/
+git commit -m "feat(web): 오류 매핑과 정지 타임아웃" -- web/recognition.js web/test/
 git rebase main
 cd web && node --test && cd ..
 git -C ~/Mac-Projects/live-caption merge --ff-only feat/recognition
@@ -769,14 +795,15 @@ cd ~/live-caption-wt/screen/web && node --test test/captions.test.js
 - [ ] **Step 4: 통과를 확인하고 커밋한다**
 
 ```bash
-git commit -- web/captions.js web/test/captions.test.js -m "$(cat <<'MSG'
+git add web/captions.js web/test/captions.test.js
+git commit -m "$(cat <<'MSG'
 feat(web): 자막 저장소
 
 확정 문단은 쌓고 중간 결과는 교체한다. 복사 전문에는 확정만 넣는다.
 
 Co-Authored-By: Claude Opus 5 (1M context) <noreply@anthropic.com>
 MSG
-)"
+)" -- web/captions.js web/test/captions.test.js
 ```
 
 ---
@@ -1008,7 +1035,8 @@ node --test        # web/ 에서. 이 세션의 테스트가 전부 통과해야
 - [ ] **Step 5: 커밋하고 통합한다**
 
 ```bash
-git commit -- web/index.html web/test/index-contract.test.js -m "feat(web): 말동무 화면"
+git add web/index.html web/test/index-contract.test.js
+git commit -m "feat(web): 말동무 화면" -- web/index.html web/test/index-contract.test.js
 git rebase main
 cd web && node --test && cd ..
 git -C ~/Mac-Projects/live-caption merge --ff-only feat/screen
@@ -1073,7 +1101,8 @@ cd ~/Mac-Projects && python sync_agent_docs.py
 - [ ] **Step 7: 커밋하고 통합한다**
 
 ```bash
-git commit -- README.md CHANGELOG.md docs/BACKLOG.md PROGRESS.md CLAUDE.md AGENTS.md -m "docs: 필수 문서 정비"
+git add README.md CHANGELOG.md docs/BACKLOG.md PROGRESS.md CLAUDE.md AGENTS.md
+git commit -m "docs: 필수 문서 정비" -- README.md CHANGELOG.md docs/BACKLOG.md PROGRESS.md CLAUDE.md AGENTS.md
 git rebase main
 base=$(git rev-parse main)
 comm -23 <(git show $base:PROGRESS.md | sort) <(sort PROGRESS.md)   # 소실 줄 전수 대조
