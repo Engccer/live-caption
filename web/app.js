@@ -237,8 +237,12 @@ captionsEl.style.fontSize = `${fontSize}px`;
 
 // 서비스워커. 실패해도 앱은 그대로 돈다(캐시가 없을 뿐이다).
 // file://이나 지원하지 않는 브라우저에서는 조용히 넘어간다.
+// 사용자에게는 알리지 않되 콘솔에는 남긴다. 완전히 삼키면 설치가 안 될 때
+// 원인을 찾을 단서가 하나도 없다.
 if ('serviceWorker' in navigator) {
-  navigator.serviceWorker.register('./sw.js').catch(() => {});
+  navigator.serviceWorker.register('./sw.js').catch((e) => {
+    console.warn('[말동무] 서비스워커 등록 실패:', e.name, e.message);
+  });
 }
 
 if (!(window.SpeechRecognition || window.webkitSpeechRecognition)) {
