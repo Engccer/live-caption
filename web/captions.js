@@ -71,3 +71,11 @@ export function saveFontSize(storage, px) {
     // 무시한다.
   }
 }
+
+// --- 자동 스크롤 판정 ---
+
+// 바닥에서 threshold(px) 이내에 있으면 새 자막을 따라간다.
+// 사용자가 놓친 대목을 읽으려고 위로 올리면 화면을 채가지 않는다.
+export function shouldAutoScroll({ scrollTop, scrollHeight, clientHeight }, threshold = 48) {
+  return scrollHeight - clientHeight - scrollTop <= threshold;
+}

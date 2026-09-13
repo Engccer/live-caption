@@ -3,6 +3,7 @@ import assert from 'node:assert/strict';
 import {
   createCaptionStore,
   FONT_STEPS, DEFAULT_FONT_SIZE, nextFontSize, loadFontSize, saveFontSize,
+  shouldAutoScroll,
 } from '../captions.js';
 
 // localStorage를 흉내 낸다. 실패하는 경우까지 시험한다.
@@ -137,4 +138,30 @@ test('저장소가 막혀 있어도 앱이 죽지 않는다', () => {
 test('storage가 아예 없어도 죽지 않는다', () => {
   assert.equal(loadFontSize(undefined), DEFAULT_FONT_SIZE);
   assert.doesNotThrow(() => saveFontSize(undefined, 40));
+});
+
+test('맨 아래에 있으면 따라간다', () => {
+  assert.equal(shouldAutoScroll({ scrollTop: 800, scrollHeight: 1000, clientHeight: 200 }), true);
+});
+
+test('위로 올려 읽고 있으면 따라가지 않는다', () => {
+  assert.equal(shouldAutoScroll({ scrollTop: 100, scrollHeight: 1000, clientHeight: 200 }), false);
+});
+
+test('바닥에서 임계값 안이면 따라간다', () => {
+  // 바닥까지 남은 거리 = 1000 - 200 - 770 = 30
+  assert.equal(shouldAutoScroll({ scrollTop: 770, scrollHeight: 1000, clientHeight: 200 }), true);
+});
+
+test('임계값을 넘으면 따라가지 않는다', () => {
+  // 남은 거리 = 100
+  assert.equal(shouldAutoScroll({ scrollTop: 700, scrollHeight: 1000, clientHeight: 200 }), false);
+});
+
+test('임계값을 직접 줄 수 있다', () => {
+  assert.equal(shouldAutoScroll({ scrollTop: 700, scrollHeight: 1000, clientHeight: 200 }, 150), true);
+});
+
+test('내용이 화면보다 짧으면 따라간다', () => {
+  assert.equal(shouldAutoScroll({ scrollTop: 0, scrollHeight: 150, clientHeight: 200 }), true);
 });
