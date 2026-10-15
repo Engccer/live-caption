@@ -17,7 +17,7 @@
 | `run_eval.py` | 실시간 STT 2단계 평가 실행기. 기본은 dry-run 예상 비용표, 실행은 예산 확인 후 |
 | `cost.py` | 엔진 단가 표, 예상 비용, 실행 중 예산 차단, 지출 장부 |
 | `stream_plan.py` | 단계별 스트리밍 세션 구성(공개 클립 묶음, 회의 녹음 분할), PCM 디코드 |
-| `engines.py` | 엔진 어댑터 6종(muse·deepgram·grok·mai·rtzr·gemini). 실시간 페이싱 전송과 이벤트 기록 |
+| `engines.py` | 엔진 어댑터 7종(muse·deepgram·grok·mai·rtzr·gemini·mai-vercel). 실시간 페이싱 전송과 이벤트 기록 |
 | `stream_score.py` | 세션 결과의 CER(표준/삭제+치환)과 partial·final 지연 집계 |
 
 ## 자료는 저장소 밖에 있다
@@ -166,7 +166,9 @@ python3 eval/tools/run_eval.py --ledger
 ```
 
 엔진 이름은 `muse`(별칭 `meta-muse`), `deepgram`, `grok`(`xai`), `mai`(`mai-streaming`),
-`rtzr`, `gemini`(`gemini-live`)다. 지정하지 않으면 6종 전부다. `--parallel`은 엔진들을 동시에, `--jobs N`은 엔진마다 세션 N개를 동시에 연다.
+`rtzr`, `gemini`(`gemini-live`), `mai-vercel`(`vercel-mai`·`mai-gateway`)다. 지정하지 않으면 `mai`를 뺀 6종이다.
+`mai`와 `mai-vercel`은 같은 모델(MAI-Transcribe-2-Streaming)을 Azure 직접과 Vercel AI Gateway 경유로 부른다.
+기본은 `mai-vercel`이고 `mai`는 명시할 때만 돈다. 둘을 함께 지정하면 비용이 두 번 든다는 경고를 낸다. `--parallel`은 엔진들을 동시에, `--jobs N`은 엔진마다 세션 N개를 동시에 연다.
 전송은 실시간 속도라 `core`는 `--jobs 1`이면 엔진당 약 4시간 걸린다. 동시 세션 한도는
 Muse 8개, 리턴제로 무료 계정 5개다. 동시 세션이 지연 측정에 영향을 주는지는 확인하지 않았다.
 
@@ -180,8 +182,9 @@ Muse 8개, 리턴제로 무료 계정 5개다. 동시 세션이 지연 측정에
 | mai | `AZURE_MAI_ENDPOINT`(`https://<리소스>.services.ai.azure.com`), `AZURE_MAI_API_KEY`, `AZURE_MAI_DEPLOYMENT_NAME` |
 | rtzr | `RTZR_CLIENT_ID`, `RTZR_CLIENT_SECRET` |
 | gemini | `GEMINI_API_KEY` |
+| mai-vercel | `AI_GATEWAY_API_KEY`(Vercel AI Gateway API 키) |
 
-mai는 현재 구독에서 배포 불가(2026-10-16)이며 Vercel AI Gateway 경로를 검토 중이다. 어댑터는 그대로 둔다.
+mai는 현재 구독에서 배포 불가(2026-10-16)라 같은 모델을 Vercel AI Gateway로 부르는 `mai-vercel`을 더했다. `mai` 어댑터는 그대로 둔다.
 
 `websockets` 패키지가 필요하다(eval 도구 중 이것만 외부 패키지다). FLEURS(float WAV)와
 Zeroth(FLAC)는 `ffmpeg`로 16kHz mono PCM16으로 변환해 보낸다.
@@ -199,17 +202,17 @@ jangnal-2026        1     1      440.9      정답 없음
 muse          2    1,019.9      0.180     0.051        71
 deepgram      2    1,019.9      0.462     0.131       183
 grok          2    1,019.9      0.200     0.057        79
-mai           2    1,019.9      0.540     0.153       214
 rtzr          2    1,019.9      0.714     0.202       283
 gemini        3    1,019.9      0.850     0.241       337
+mai-vercel    2    1,019.9      0.540     0.153       214
 합계                                        0.835     1,169
 별도 분할: gemini (세션 상한 540초, 세션 3개, 최장 440.9초)
 
 누적 지출 0원 / 한도 20,000원
 ```
 
-`core` 6엔진 합계는 약 $11.68(16,348원)이다(1,400원/달러). 기본 누적 한도 20,000원 안에 들지만
-여유가 크지 않다.
+`core` 기본 6엔진 합계는 약 $11.68(16,348원)이다(1,400원/달러). 기본 누적 한도 20,000원 안에 들지만
+여유가 크지 않다. `mai`까지 더하면 19,344원으로 한도에 거의 닿는다.
 
 ### 비용 계산과 차단
 
@@ -275,7 +278,7 @@ CER, partial 지연 중앙/최대, final 지연 중앙, 전송 초, 채점 포�
 ### 실호출 전 남은 불확실성
 
 **muse·deepgram은 `spike/probe.py`에서 실호출로 확인한 순서를 옮겼다. grok·mai·rtzr·gemini는 문서만
-보고 짰다. 다음 세션의 첫 실호출이 검증 게이트다.** 로컬 가짜 서버 테스트는 메시지 순서만
+보고, mai-vercel은 AI SDK 소스만 보고 짰다. 다음 세션의 첫 실호출이 검증 게이트다.** 로컬 가짜 서버 테스트는 메시지 순서만
 보장한다. 첫 실행은 `taste`에 엔진 하나씩, 작은 예산으로 시작하고 세션 JSON의 이벤트를 열어
 아래를 확인한다.
 
@@ -297,5 +300,20 @@ CER, partial 지연 중앙/최대, final 지연 중앙, 전송 초, 채점 포�
   확정 전사를 놓칠 수 있다). `inputTranscription`이 겹치지 않는 조각인지(지금은 공백으로 이어 붙인다).
   `endOffset`이 세션 시작 기준인지(지연 계산의 전제). `usageMetadata`가 누적 값인지. 실제 연결 상한과
   `goAway` 시점(이벤트로 기록). 설정 키는 문서의 WebSocket 표기(camelCase `languageCodes`)를 따랐다.
+- **mai-vercel**: 웹 문서에 WebSocket 주소가 없어 AI SDK 소스(`@ai-sdk/gateway` 4.0.115,
+  `@ai-sdk/provider-utils` 5.0.61)에서 프로토콜을 옮겼다. 주소 `wss://ai-gateway.vercel.sh/v4/ai/transcription-model?ai-model-id=…`,
+  인증은 서브프로토콜 `ai-gateway-auth.<키>`(키는 URL에 들어가지 않는다)와 `Authorization` 헤더,
+  첫 프레임 `transcription-stream.start`, 오디오 raw PCM 바이너리, 끝 `transcription-stream.audio-done`,
+  서버 `finish` 파트 뒤 1000 종료다. 서버 키로 바로 연결하고 `getToken`(단기 토큰 발급)은 쓰지 않는다.
+  확인할 것: ① **게이트웨이에 commit 프레임이 없다.** AI SDK의 Azure MAI 어댑터는 오디오 끝에서 한 번만
+  commit하므로 게이트웨이도 그렇다면 확정 전사가 세션 끝에야 오고(final 지연 = 세션 길이), 3~10초마다
+  commit하는 `mai`와 지연을 견줄 수 없다. 끝난 뒤 전사 대기는 120초로 늘렸다. ② 서버 키를 서브프로토콜로
+  받는지(소스상 게이트웨이가 바꿔 읽는다고 적혀 있다). ③ `providerOptions.azure.language: "ko"`가 스트리밍에서
+  전달되는지(문서의 `azure` 키 예시는 배치 모델 것). ④ 16kHz 허용(Azure 어댑터는 16000·24000 허용,
+  Vercel 발표 예시가 16000). ⑤ partial·final에 오디오 위치(`startSecond` 등)가 오는지(없으면 지연을 못 잰다).
+  `transcript-delta`에는 오디오 위치 필드가 없어 지연 집계에서 빠지고, final 지연은 `transcript-final`의 `endSecond`로만 잰다.
+  ⑥ 게이트웨이 세션 상한(소스에 없어 Azure MAI 1시간을 따른다)과 과금 기준(오디오 시간인지 연결 시간인지),
+  단가 $0.54/h는 모델 페이지 값이고 청구서로 확인하지 않았다. `finish` 텍스트가 비면 모은 delta·final로
+  대체하고 `check` 이벤트를, 모두 비면 `empty` 이벤트를 남긴다. `error` 파트를 받으면 송신을 멈추고 바로 끝낸다.
 - **muse·deepgram**: 남아 있는 스파이크 결과는 24kHz 합성 픽스처다. 16kHz(`PCM_16KHZ`, `sample_rate=16000`)
   전송은 코드가 허용하지만 기록된 실호출 결과로는 확인하지 못했다. Deepgram이 연결 시간으로 과금하는지도 미확인이다.

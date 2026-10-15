@@ -28,7 +28,9 @@ PCM_TOLERANCE = 0.01      # 디코드 길이와 계획 길이의 허용 차이(�
 
 # 엔진별 세션 상한(초). None은 문서에 상한이 없거나 확인하지 못한 경우다.
 # gemini는 문서상 연결 약 10분이라 여유를 두고 540초로 둔다.
-SESSION_LIMITS = {'muse': 3600, 'mai': 3600, 'deepgram': None, 'grok': None, 'rtzr': None, 'gemini': 540}
+# mai-vercel은 Azure MAI 상한을 따른다(AI SDK 게이트웨이 소스에 별도 상한이 없다).
+SESSION_LIMITS = {'muse': 3600, 'mai': 3600, 'mai-vercel': 3600, 'deepgram': None, 'grok': None,
+                  'rtzr': None, 'gemini': 540}
 
 
 @dataclass

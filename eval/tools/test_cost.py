@@ -23,6 +23,9 @@ class EstimateTest(unittest.TestCase):
     def test_gemini_estimate(self):
         self.assertAlmostEqual(cost.estimate('gemini', [3600])['usd'], 0.85)
 
+    def test_mai_vercel_estimate(self):
+        self.assertAlmostEqual(cost.estimate('mai-vercel', [1800])['usd'], 0.27)
+
     def test_exchange_rate_override(self):
         self.assertAlmostEqual(cost.estimate('grok', [3600], krw_per_usd=1000)['krw'], 200)
 

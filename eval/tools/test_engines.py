@@ -6,9 +6,11 @@
 import asyncio
 import base64
 import json
+import time
 import unittest
 
 import cost
+import stream_score
 
 try:
     from websockets.asyncio.server import serve
@@ -20,7 +22,7 @@ PCM = b'\x10\x00' * 16000          # 1초
 ENV = {'META_API_KEY': 'k-muse', 'DEEPGRAM_API_KEY': 'k-dg', 'XAI_API_KEY': 'k-xai',
        'AZURE_MAI_ENDPOINT': 'https://res.services.ai.azure.com', 'AZURE_MAI_API_KEY': 'k-mai',
        'AZURE_MAI_DEPLOYMENT_NAME': 'dep', 'RTZR_CLIENT_ID': 'id', 'RTZR_CLIENT_SECRET': 'sec',
-       'GEMINI_API_KEY': 'gem-secret-key-123'}
+       'GEMINI_API_KEY': 'gem-secret-key-123', 'AI_GATEWAY_API_KEY': 'vck_gateway-secret-456'}
 
 
 async def with_server(handler, body):
@@ -360,6 +362,192 @@ class GeminiTest(unittest.TestCase):
 
 
 @unittest.skipIf(serve is None, 'websockets 미설치')
+class MaiVercelTest(unittest.TestCase):
+    KEY = 'vck_gateway-secret-456'
+
+    def run_engine(self, handler, pcm=PCM, budget=1e9):
+        async def wrapped(ws, log):
+            log.append(('handshake', ws.request.path, ws.request.headers.get('Sec-WebSocket-Protocol'),
+                        ws.request.headers.get('Authorization'), ws.subprotocol))
+            await handler(ws, log)
+
+        async def body(url):
+            return await engines.MaiVercel(environ=ENV, url=url, pace=0).run(
+                pcm, guard(budget).open_session('mai-vercel'))
+
+        async def go():
+            log = []
+
+            async def h(ws):
+                await wrapped(ws, log)
+
+            async with serve(h, '127.0.0.1', 0, subprotocols=['ai-gateway-transcription.v1']) as server:
+                port = server.sockets[0].getsockname()[1]
+                result = await body(f'ws://127.0.0.1:{port}')
+            return result, log
+        return asyncio.run(go())
+
+    def test_start_frame_binary_audio_then_audio_done(self):
+        async def handler(ws, log):
+            async for msg in ws:
+                if isinstance(msg, bytes):
+                    log.append(('audio', len(msg)))
+                    continue
+                data = json.loads(msg)
+                log.append(('json', data))
+                if data['type'] == 'transcription-stream.start':
+                    await ws.send(json.dumps({'type': 'stream-start', 'warnings': []}))
+                    await ws.send(json.dumps({'type': 'transcript-partial', 'text': '하',
+                                              'startSecond': 0, 'durationInSeconds': 0.4}))
+                elif data['type'] == 'transcription-stream.audio-done':
+                    await ws.send(json.dumps({'type': 'transcript-delta', 'id': 'i1', 'delta': '하나 '}))
+                    await ws.send(json.dumps({'type': 'transcript-delta', 'id': 'i1', 'delta': '둘'}))
+                    await ws.send(json.dumps({'type': 'transcript-final', 'id': 'i1', 'text': '하나 둘',
+                                              'endSecond': 1.0}))
+                    await ws.send(json.dumps({'type': 'finish', 'text': '하나 둘', 'segments': [],
+                                              'language': 'ko', 'durationInSeconds': 1}))
+                    await ws.close(1000)
+
+        result, log = self.run_engine(handler)
+        self.assertIsNone(result['error'])
+        path, protocols, authz, chosen = log[0][1:]
+        self.assertTrue(path.startswith('/?'))
+        self.assertIn('ai-model-id=microsoft%2Fmai-transcribe-2-streaming', path)
+        self.assertNotIn(self.KEY, path)                                  # 키는 URL에 없다
+        self.assertEqual([p.strip() for p in protocols.split(',')],
+                         ['ai-gateway-transcription.v1', 'ai-gateway-auth.' + self.KEY])
+        self.assertEqual(authz, 'Bearer ' + self.KEY)
+        self.assertEqual(chosen, 'ai-gateway-transcription.v1')
+        self.assertEqual(log[1], ('json', {'type': 'transcription-stream.start',
+                                           'inputAudioFormat': {'type': 'audio/pcm', 'rate': 16000},
+                                           'providerOptions': {'azure': {'language': 'ko'}}}))
+        audio = [e[1] for e in log if e[0] == 'audio']
+        self.assertEqual(audio[0], 3200)                                  # 100ms, 64KiB 이하
+        self.assertEqual(sum(audio), len(PCM))
+        self.assertEqual(log[-1], ('json', {'type': 'transcription-stream.audio-done'}))
+        self.assertEqual(result['text'], '하나 둘')
+        lags = [(e['final'], e['audio_ms']) for e in result['events'] if e['kind'] == 'transcript']
+        self.assertEqual(lags, [(False, 400), (True, 1000)])          # final 지연도 집계된다
+        self.assertEqual([e['text'] for e in result['events'] if e['kind'] == 'delta'], ['하나 ', '둘'])
+        stats = stream_score.latency_stats(result['events'])
+        self.assertEqual((stats['partial']['n'], stats['final']['n']), (1, 1))
+        self.assertNotIn(self.KEY, json.dumps(result, ensure_ascii=False))
+
+    def test_error_part_stops_audio_and_key_redacted(self):
+        pcm = PCM * 4                                                     # 4초를 0.8초에 걸쳐 보낸다
+
+        async def handler(ws, log):
+            await ws.recv()                                               # start
+            await ws.recv()                                               # 첫 오디오
+            await ws.send(json.dumps({'type': 'error', 'error': {
+                'type': 'authentication_error', 'message': 'invalid key ' + self.KEY}}))
+            async for msg in ws:
+                if isinstance(msg, str):
+                    log.append(('text', json.loads(msg)['type']))
+            # 오류 뒤 닫지 않는다. 클라이언트가 스스로 멈추고 닫아야 한다
+
+        async def body(url):
+            eng = engines.MaiVercel(environ=ENV, url=url, pace=0.2)
+            return await eng.run(pcm, guard().open_session('mai-vercel'))
+
+        result, log = asyncio.run(with_server(handler, body))
+        self.assertTrue(result['error'].startswith('RuntimeError: mai-vercel 오류'), result['error'])
+        self.assertIn('***', result['error'])
+        self.assertNotIn(('text', 'transcription-stream.audio-done'), log)   # 오류 뒤 끝 신호를 보내지 않는다
+        self.assertLess(result['sent_seconds'], 2.0)                     # 4초 중 절반 전에 멈춘다(여유 큼)
+        self.assertNotIn(self.KEY, json.dumps(result, ensure_ascii=False))
+
+    def test_error_then_server_close_reports_server_reason(self):
+        async def handler(ws, log):
+            await ws.recv()
+            await ws.recv()
+            await ws.send(json.dumps({'type': 'error', 'error': {'type': 'rate_limit_exceeded',
+                                                                  'message': 'slow down'}}))
+            await ws.close(1008)
+
+        async def body(url):
+            eng = engines.MaiVercel(environ=ENV, url=url, pace=0.5)
+            return await eng.run(PCM * 2, guard().open_session('mai-vercel'))
+
+        result, _ = asyncio.run(with_server(handler, body))
+        self.assertIn('mai-vercel 오류: slow down', result['error'])
+        self.assertNotIn('ConnectionClosed', result['error'])
+
+    def test_error_after_audio_done_without_close_returns_fast(self):
+        async def handler(ws, log):
+            async for msg in ws:
+                if isinstance(msg, str) and json.loads(msg)['type'] == 'transcription-stream.audio-done':
+                    await ws.send(json.dumps({'type': 'error', 'error': {'message': 'upstream failed'}}))
+                    await ws.wait_closed()                                # 서버는 닫지 않는다
+                    return
+
+        async def body(url):
+            eng = engines.MaiVercel(environ=ENV, url=url, pace=0)
+            eng.drain_timeout = 60.0
+            start = time.monotonic()
+            result = await eng.run(PCM, guard().open_session('mai-vercel'))
+            return result, time.monotonic() - start
+
+        (result, elapsed), _ = asyncio.run(with_server(handler, body))
+        self.assertIn('upstream failed', result['error'])
+        self.assertLess(elapsed, 10.0)                                    # drain 60초를 기다리지 않는다
+
+    def finish_with(self, parts):
+        async def handler(ws, log):
+            async for msg in ws:
+                if isinstance(msg, str) and json.loads(msg)['type'] == 'transcription-stream.audio-done':
+                    for part in parts:
+                        await ws.send(json.dumps(part))
+                    await ws.close(1000)
+                    return
+        return self.run_engine(handler)[0]
+
+    def test_empty_finish_falls_back_to_collected(self):
+        result = self.finish_with([{'type': 'transcript-delta', 'delta': '하나 둘'},
+                                   {'type': 'finish', 'text': '', 'segments': []}])
+        self.assertEqual(result['text'], '하나 둘')
+        self.assertTrue(any(e['kind'] == 'check' and '대체' in e['error'] for e in result['events']))
+        result = self.finish_with([{'type': 'transcript-final', 'text': '셋'},
+                                   {'type': 'finish', 'segments': []}])     # text 없음
+        self.assertEqual(result['text'], '셋')
+        self.assertIsNone(result['error'])
+
+    def test_all_empty_marked(self):
+        result = self.finish_with([{'type': 'finish', 'text': '', 'segments': []}])
+        self.assertEqual(result['text'], '')
+        self.assertIsNone(result['error'])
+        self.assertEqual([e['kind'] for e in result['events'] if e['kind'] in ('empty', 'check')], ['empty'])
+
+    def test_close_without_finish_is_error(self):
+        async def handler(ws, log):
+            async for msg in ws:
+                if isinstance(msg, str) and json.loads(msg)['type'] == 'transcription-stream.audio-done':
+                    await ws.send(json.dumps({'type': 'transcript-delta', 'delta': '하나'}))
+                    await ws.close(1011)
+                    return
+
+        result, _ = self.run_engine(handler)
+        self.assertIn('finish 파트 없이', result['error'])
+        self.assertEqual(result['text'], '하나')                          # 그때까지의 delta는 남긴다
+
+    def test_budget_stop_still_sends_audio_done(self):
+        async def handler(ws, log):
+            async for msg in ws:
+                if isinstance(msg, bytes):
+                    log.append(('audio', len(msg)))
+                elif json.loads(msg)['type'] == 'transcription-stream.audio-done':
+                    log.append(('done',))
+                    await ws.send(json.dumps({'type': 'finish', 'text': '', 'segments': []}))
+                    await ws.close(1000)
+
+        # 시간당 0.54*1400=756원. 0.1원이면 0.476초까지만 보낸다
+        result, log = self.run_engine(handler, budget=0.1)
+        self.assertTrue(result['aborted'])
+        self.assertEqual(sum(e[1] for e in log if e[0] == 'audio'), 4 * 3200)
+        self.assertEqual(log[-1], ('done',))
+
+
+@unittest.skipIf(serve is None, 'websockets 미설치')
 class BudgetStopTest(unittest.TestCase):
     def test_stops_sending_at_budget(self):
         async def handler(ws, log):
@@ -388,6 +576,14 @@ class RedactTest(unittest.TestCase):
         self.assertIn('ab%2Fcd%2Bef%3Dgh+ij', eng.url())
         text = 'raw ab/cd+ef=gh ij, quote ab%2Fcd%2Bef%3Dgh%20ij, plus ab%2Fcd%2Bef%3Dgh+ij'
         self.assertEqual(eng.redact(text), 'raw ***, quote ***, plus ***')
+
+    def test_recorder_redacts_every_string_field(self):
+        key = 'k' * 20
+        rec = engines.Recorder(engines.Gemini(environ={'GEMINI_API_KEY': key}).redact)
+        rec.log('transcript', text='말한 ' + key, other=f'x{key}', audio_ms=5)
+        self.assertEqual(rec.events[0]['text'], '말한 ***')
+        self.assertEqual(rec.events[0]['other'], 'x***')
+        self.assertEqual(rec.events[0]['audio_ms'], 5)
 
     def test_recorder_redacts_before_truncating(self):
         key = 'k' * 20

@@ -30,6 +30,10 @@ PRICES = {
     'grok': Price(0.20, 0, 'x.ai 발표 스트리밍 시간당 $0.20'),
     # MAI-Transcribe-2-Streaming: 시간당 $0.54 도입가 (2차 보도, docs/research/2026-10-16-transcription-releases-sep-oct.md)
     'mai': Price(0.54, 0, 'TestingCatalog 보도 시간당 $0.54'),
+    # 같은 모델을 Vercel AI Gateway로: 시간당 $0.54 (vercel.com/ai-gateway/models/mai-transcribe-2-streaming
+    # 표기값으로 전달받음. 2026-10-16 WebFetch 본문에는 가격 칸이 잡히지 않아 재확인 못 함). 게이트웨이는 "listed rates, no platform fee or markup"
+    # (vercel.com/changelog/microsoft-ai-models-are-now-available-on-ai-gateway)
+    'mai-vercel': Price(0.54, 0, 'Vercel AI Gateway 모델 페이지 시간당 $0.54'),
     # 리턴제로 스트리밍 T1: 시간당 1,000원(VAT 별도), 스트리밍 세션당 최소 10초 (developers.rtzr.ai/docs/pricing)
     'rtzr': Price(1000 / KRW_PER_USD, 10, '리턴제로 요금표 시간당 1,000원, 세션당 최소 10초'),
     # Gemini 3.5 Transcribe Live: 토큰 과금이라 시간당 값은 추정이다.

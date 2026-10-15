@@ -123,8 +123,20 @@ class DryRunTest(unittest.TestCase):
         self.assertEqual(rows[0][1], rows[1][1])            # 같은 세션 수
         self.assertEqual(rows[0][1], '3')                   # 총회 590초가 540초 상한으로 둘 + 장날
 
+    def test_default_engines_exclude_mai_and_warn_on_both(self):
+        self.assertNotIn('mai', run_eval.ALL_ENGINES)
+        self.assertIn('mai-vercel', run_eval.ALL_ENGINES)
+        code, out, _ = call_main(['--stage', 'taste', '--root', str(self.root)], environ={})
+        self.assertNotIn('\nmai  ', out)
+        self.assertNotIn('같은 모델', out)
+        code, out, _ = call_main(['--stage', 'taste', '--root', str(self.root), '--engines', 'mai,mai-vercel'],
+                                 environ={})
+        self.assertEqual(code, 0)
+        self.assertIn('경고: mai · mai-vercel는 같은 모델', out)
+
     def test_parse_aliases(self):
         self.assertEqual(run_eval.parse_engines('meta-muse, xai,mai-streaming,muse'), ['muse', 'grok', 'mai'])
+        self.assertEqual(run_eval.parse_engines('vercel-mai,mai,mai-gateway'), ['mai-vercel', 'mai'])
 
 
 @unittest.skipIf(serve is None, 'websockets 미설치')
@@ -211,6 +223,42 @@ class GeminiLedgerKeyTest(unittest.TestCase):
                         self.assertNotIn(key, path.read_text(encoding='utf-8'), path.name)
         finally:
             engines.Gemini.IDLE_END = idle
+
+
+@unittest.skipIf(serve is None, 'websockets 미설치')
+class MaiVercelLedgerKeyTest(unittest.TestCase):
+    def test_key_never_written(self):
+        key = 'vck_ledger-secret-777'
+
+        async def handler(ws):
+            async for msg in ws:
+                if isinstance(msg, str) and json.loads(msg)['type'] == 'transcription-stream.audio-done':
+                    await ws.send(json.dumps({'type': 'transcript-delta', 'delta': '하나 둘'}))
+                    await ws.send(json.dumps({'type': 'finish', 'text': '하나 둘', 'segments': []}))
+                    await ws.close(1000)
+                    return
+
+        with tempfile.TemporaryDirectory() as tmp:
+            root = make_root(Path(tmp) / 'eval')
+            plan = stream_plan.engine_units(root, 'taste', ['mai-vercel'])
+            args = argparse.Namespace(stage='taste', krw_per_usd=1400, parallel=False, jobs=1)
+
+            async def go():
+                async with serve(handler, '127.0.0.1', 0, subprotocols=['ai-gateway-transcription.v1']) as server:
+                    url = f'ws://127.0.0.1:{server.sockets[0].getsockname()[1]}'
+                    kwargs = {'mai-vercel': {'environ': {'AI_GATEWAY_API_KEY': key}, 'url': url, 'pace': 0}}
+                    return await run_eval.execute(args, root, plan, {'mai-vercel': 1.0}, 1000.0,
+                                                  decode=stream_plan.decode_pcm, engine_kwargs=kwargs)
+
+            run_dir, summary = asyncio.run(go())
+            self.assertEqual(summary['mai-vercel']['status'], 'completed')
+            self.assertEqual(summary['mai-vercel']['sets']['chonghoe-2026']['cer'], 0.0)
+            ledger = json.loads((Path(tmp) / 'runs' / 'ledger.jsonl').read_text())
+            self.assertEqual(ledger['engine'], 'mai-vercel')
+            self.assertEqual(ledger['error_units'], 0)
+            for path in Path(tmp, 'runs').rglob('*'):
+                if path.is_file():
+                    self.assertNotIn(key, path.read_text(encoding='utf-8'), path.name)
 
 
 class FakeEngine:

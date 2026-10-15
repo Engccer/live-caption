@@ -8,7 +8,7 @@
 - 반환: 최종 텍스트, 이벤트, 전송 초, 예산 중단 여부, 오류.
 
 ⚠ meta-muse·deepgram은 spike/probe.py에서 실호출로 확인한 순서를 옮겼다. grok·mai·rtzr·gemini는
-문서만 보고 짰고 실호출로 확인하지 않았다. **다음 세션의 첫 실호출이 검증 게이트다.**
+문서만 보고, mai-vercel은 AI SDK 소스만 보고 짰고 실호출로 확인하지 않았다. **다음 세션의 첫 실호출이 검증 게이트다.**
 로컬 가짜 서버 테스트(test_engines.py)는 메시지 순서만 보장하고 서버의 실제 응답 형식은
 보장하지 않는다.
 """
@@ -42,6 +42,9 @@ class Recorder:
         return round((time.monotonic() - self.t0) * 1000, 1) if self.t0 else 0.0
 
     def log(self, kind, **fields):
+        for k, v in fields.items():           # 모든 문자열 필드에서 키를 지운다(방어)
+            if isinstance(v, str):
+                fields[k] = self.redact(v)
         if fields.get('error') is not None:   # 키를 먼저 지우고 나서 자른다
             fields['error'] = self.redact(str(fields['error']))[:ERROR_MAX]
         self.events.append({'t_ms': self.now_ms(), 'kind': kind,
@@ -63,12 +66,12 @@ class Engine:
     def missing_env(self):
         return [k for k in self.env if not self.environ.get(k, '').strip()]
 
-    def connect(self, url, headers=None):
+    def connect(self, url, headers=None, subprotocols=None):
         if self._connect:
-            return self._connect(url, headers)
+            return self._connect(url, headers, subprotocols) if subprotocols else self._connect(url, headers)
         import websockets
-        return websockets.connect(url, additional_headers=headers or {}, max_size=None,
-                                  open_timeout=30)
+        return websockets.connect(url, additional_headers=headers or {}, subprotocols=subprotocols,
+                                  max_size=None, open_timeout=30)
 
     async def paced_send(self, pcm, rec, budget, send_chunk, after_chunk=None):
         """청크마다 비용을 먼저 청구하고 실시간 위치에 맞춰 보낸다. 예산이 닿으면 True."""
@@ -592,4 +595,118 @@ class Gemini(Engine):
         return ' '.join(finals)
 
 
-ENGINES = {cls.name: cls for cls in (Muse, Deepgram, Grok, Mai, Rtzr, Gemini)}
+# ------------------------------------------------------------------ Vercel AI Gateway 경유 MAI
+class MaiVercel(Engine):
+    """Vercel AI Gateway의 microsoft/mai-transcribe-2-streaming. 실호출 미확인.
+
+    와이어 프로토콜은 문서에 없어 AI SDK 소스에서 옮겼다(@ai-sdk/gateway 4.0.115
+    gateway-transcription-model.ts·gateway-realtime-auth.ts, @ai-sdk/provider-utils 5.0.61
+    transcription-stream-envelope.ts). 서버 키로 바로 연결한다. getToken(client secret 발급)은
+    브라우저에 키를 주지 않으려는 단계라 서버 측 평가에는 필요 없다.
+    - 인증: 서브프로토콜 `ai-gateway-auth.<키>`(게이트웨이가 Authorization으로 바꿔 읽는다).
+      SDK가 헤더를 보낼 수 있는 런타임에서 함께 보내는 Authorization 헤더도 같이 보낸다.
+    - 첫 텍스트 프레임 transcription-stream.start, 오디오는 raw PCM 바이너리 프레임(64KiB 이하),
+      끝은 transcription-stream.audio-done. 서버는 finish 파트 뒤 1000으로 닫는다.
+    - error 파트는 종결이다. 받으면 오디오를 멈춘다. finish 없이 닫히면 오류다.
+    ⚠ 게이트웨이에는 commit 프레임이 없다. AI SDK의 Azure MAI 어댑터(@ai-sdk/azure 4.0.103)는
+    오디오 끝에서 한 번만 commit한다. 게이트웨이도 그렇다면 확정 전사가 세션 끝에야 온다.
+    """
+    name, env, chunk_ms = 'mai-vercel', ('AI_GATEWAY_API_KEY',), 100
+    drain_timeout = 120.0      # 끝에서 한 번 commit이면 세션 전체를 audio-done 뒤에 전사할 수 있다
+    MODEL = 'microsoft/mai-transcribe-2-streaming'
+    URL = 'wss://ai-gateway.vercel.sh/v4/ai/transcription-model'
+    MARKER = 'ai-gateway-transcription.v1'
+    AUTH_PREFIX = 'ai-gateway-auth.'
+
+    def url(self):
+        qs = urllib.parse.urlencode({'ai-model-id': self.MODEL})
+        return f'{self.url_override or self.URL}?{qs}'
+
+    def auth(self):
+        key = self.environ['AI_GATEWAY_API_KEY'].strip()
+        headers = {'Authorization': f'Bearer {key}', 'ai-gateway-protocol-version': '0.0.1',
+                   'ai-gateway-auth-method': 'api-key', 'ai-model-id': self.MODEL,
+                   'ai-transcription-model-specification-version': '4'}
+        return headers, [self.MARKER, self.AUTH_PREFIX + key]
+
+    async def session(self, pcm, rec, budget, state):
+        deltas, finals, done = [], [], {}
+        state['collect'] = lambda: ''.join(deltas) or ' '.join(finals)
+        headers, protocols = self.auth()
+        async with self.connect(self.url(), headers, protocols) as ws:
+            await ws.send(json.dumps({
+                'type': 'transcription-stream.start',
+                'inputAudioFormat': {'type': 'audio/pcm', 'rate': RATE},
+                'providerOptions': {'azure': {'language': 'ko'}}}))
+
+            async def receiver():
+                try:
+                    async for raw in ws:
+                        if isinstance(raw, bytes):
+                            rec.log('skipped_frames', count=1)
+                            continue
+                        msg = json.loads(raw)
+                        kind = msg.get('type', '?')
+                        if kind == 'transcript-delta':      # 오디오 위치가 없어 지연 집계에서 뺀다
+                            deltas.append(msg.get('delta', ''))
+                            rec.log('delta', text=msg.get('delta'))
+                        elif kind == 'transcript-partial':
+                            pos = None
+                            if msg.get('startSecond') is not None and msg.get('durationInSeconds') is not None:
+                                pos = round((msg['startSecond'] + msg['durationInSeconds']) * 1000)
+                            rec.log('transcript', text=msg.get('text'), final=False, audio_ms=pos)
+                        elif kind == 'transcript-final':
+                            finals.append(msg.get('text', ''))
+                            pos = msg.get('endSecond')
+                            rec.log('transcript', text=msg.get('text'), final=True,
+                                    audio_ms=round(pos * 1000) if pos is not None else None)
+                        elif kind == 'finish':
+                            done['text'] = msg.get('text') if isinstance(msg.get('text'), str) else ''
+                            if msg.get('usage'):
+                                state['usage'] = msg['usage']
+                            rec.log('finish', duration=msg.get('durationInSeconds'))
+                            return
+                        elif kind == 'error':
+                            err = msg.get('error')
+                            done['error'] = err.get('message', err) if isinstance(err, dict) else err
+                            rec.log('error', error=str(err))
+                            return                      # error 파트는 종결이다. _drain도 바로 끝난다
+                        elif kind == 'stream-start':
+                            rec.log('stream-start', error=str(msg['warnings']) if msg.get('warnings') else None)
+                        else:
+                            rec.log(kind)
+                except _closed_types():
+                    pass
+
+            async def send(chunk):
+                if 'error' in done:             # error 파트는 종결이다(envelope rule 5)
+                    raise RuntimeError(f'mai-vercel 오류: {done["error"]}')
+                await ws.send(chunk)
+
+            task = self.receiver_task(receiver(), state)
+            try:
+                state['aborted'] = await self.paced_send(pcm, rec, budget, send)
+                if 'error' not in done:
+                    await ws.send(json.dumps({'type': 'transcription-stream.audio-done'}))
+                await self._drain(task)
+            except Exception:
+                if 'error' in done:     # error 파트 뒤 서버가 닫아 생긴 ConnectionClosed보다 서버 사유를 앞세운다
+                    raise RuntimeError(f'mai-vercel 오류: {done["error"]}') from None
+                raise
+        if 'error' in done:
+            raise RuntimeError(f'mai-vercel 오류: {done["error"]}')
+        if 'text' not in done:
+            raise RuntimeError('finish 파트 없이 연결이 끝남')
+        collected = ''.join(deltas) or ' '.join(finals)
+        if not done['text']:
+            if collected:
+                rec.log('check', error='finish 텍스트가 비어 모은 delta·final로 대체')
+                return collected
+            rec.log('empty', error='finish·delta·final 모두 비어 있음')
+            return ''
+        if collected and done['text'] != collected:
+            rec.log('check', error='finish 텍스트가 delta 합과 다름(finish를 채택)')
+        return done['text']
+
+
+ENGINES = {cls.name: cls for cls in (Muse, Deepgram, Grok, Mai, Rtzr, Gemini, MaiVercel)}

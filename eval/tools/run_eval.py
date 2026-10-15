@@ -27,8 +27,11 @@ from public_data import data_root, outside_repo
 
 ALIASES = {'meta-muse': 'muse', 'muse': 'muse', 'deepgram': 'deepgram', 'grok': 'grok', 'xai': 'grok',
            'mai': 'mai', 'mai-streaming': 'mai', 'rtzr': 'rtzr', 'returnzero': 'rtzr',
-           'gemini': 'gemini', 'gemini-live': 'gemini'}
-ALL_ENGINES = ['muse', 'deepgram', 'grok', 'mai', 'rtzr', 'gemini']
+           'gemini': 'gemini', 'gemini-live': 'gemini',
+           'mai-vercel': 'mai-vercel', 'vercel-mai': 'mai-vercel', 'mai-gateway': 'mai-vercel'}
+# mai는 같은 모델을 Azure로 직접 부른다. 기본은 mai-vercel만 두고 mai는 명시할 때만 돈다.
+ALL_ENGINES = ['muse', 'deepgram', 'grok', 'rtzr', 'gemini', 'mai-vercel']
+SAME_MODEL = ('mai', 'mai-vercel')
 
 
 def parse_engines(text):
@@ -286,7 +289,7 @@ def make_engine(name, engine_kwargs=None):
 def main(argv=None, environ=None):
     ap = argparse.ArgumentParser(description=__doc__, formatter_class=argparse.RawDescriptionHelpFormatter)
     ap.add_argument('--stage', choices=('taste', 'core'))
-    ap.add_argument('--engines', default=','.join(ALL_ENGINES), help='쉼표 구분. 기본 5종 전부')
+    ap.add_argument('--engines', default=','.join(ALL_ENGINES), help='쉼표 구분. 기본 전부')
     ap.add_argument('--budget-krw', type=positive_finite, help='이번 실행 예산(원). --confirm과 함께 써야 한다')
     ap.add_argument('--total-cap-krw', type=positive_finite, default=cost.TOTAL_CAP_KRW,
                     help=f'장부 기준 누적 지출 한도(원, 기본 {cost.TOTAL_CAP_KRW:,.0f})')
@@ -320,6 +323,8 @@ def main(argv=None, environ=None):
     estimates = plan_estimates(plan, args.krw_per_usd)
     table, _ = format_plan(args.stage, plan, estimates)
     print(table)
+    if all(e in engines for e in SAME_MODEL):
+        print(f'\n경고: {" · ".join(SAME_MODEL)}는 같은 모델(MAI-Transcribe-2-Streaming)이라 비용이 두 번 든다')
     spent_total = cost.ledger_spent_krw(runs_root(root))
     print(f'\n누적 지출 {spent_total:,.0f}원 / 한도 {args.total_cap_krw:,.0f}원')
 
