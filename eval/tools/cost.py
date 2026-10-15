@@ -32,6 +32,11 @@ PRICES = {
     'mai': Price(0.54, 0, 'TestingCatalog 보도 시간당 $0.54'),
     # 리턴제로 스트리밍 T1: 시간당 1,000원(VAT 별도), 스트리밍 세션당 최소 10초 (developers.rtzr.ai/docs/pricing)
     'rtzr': Price(1000 / KRW_PER_USD, 10, '리턴제로 요금표 시간당 1,000원, 세션당 최소 10초'),
+    # Gemini 3.5 Transcribe Live: 토큰 과금이라 시간당 값은 추정이다.
+    # 입력 오디오 $3.50/1M 토큰 x 32토큰/초 = 분당 약 $0.0067,
+    # 출력 텍스트 $21/1M 토큰 x 한국어 말 1분 약 350토큰 = 분당 약 $0.0074 → 합 분당 약 $0.0141.
+    # 보수적으로 시간당 $0.85. 출처: moment/docs/research/2026-10-07-stt-engine-comparison.md 요금표(2026-10-07 조회)
+    'gemini': Price(0.85, 0, 'Google 요금표 토큰 단가에서 환산한 추정치'),
 }
 
 

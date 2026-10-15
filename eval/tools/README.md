@@ -17,7 +17,7 @@
 | `run_eval.py` | 실시간 STT 2단계 평가 실행기. 기본은 dry-run 예상 비용표, 실행은 예산 확인 후 |
 | `cost.py` | 엔진 단가 표, 예상 비용, 실행 중 예산 차단, 지출 장부 |
 | `stream_plan.py` | 단계별 스트리밍 세션 구성(공개 클립 묶음, 회의 녹음 분할), PCM 디코드 |
-| `engines.py` | 엔진 어댑터 5종(muse·deepgram·grok·mai·rtzr). 실시간 페이싱 전송과 이벤트 기록 |
+| `engines.py` | 엔진 어댑터 6종(muse·deepgram·grok·mai·rtzr·gemini). 실시간 페이싱 전송과 이벤트 기록 |
 | `stream_score.py` | 세션 결과의 CER(표준/삭제+치환)과 partial·final 지연 집계 |
 
 ## 자료는 저장소 밖에 있다
@@ -158,7 +158,7 @@ python3 eval/tools/run_eval.py --stage taste
 python3 eval/tools/run_eval.py --stage core --engines muse,grok
 
 # 2. 실제 실행. 키가 있는 엔진만 돌고, 키가 없는 엔진은 빠진 환경변수를 알리고 건너뛴다
-python3 eval/tools/run_eval.py --stage taste --engines muse,deepgram,grok,mai,rtzr \
+python3 eval/tools/run_eval.py --stage taste --engines muse,deepgram,grok,rtzr,gemini \
   --budget-krw 1000 --confirm --parallel          # 누적 한도는 기본 20,000원(--total-cap-krw)
 
 # 3. 누적 지출
@@ -166,7 +166,7 @@ python3 eval/tools/run_eval.py --ledger
 ```
 
 엔진 이름은 `muse`(별칭 `meta-muse`), `deepgram`, `grok`(`xai`), `mai`(`mai-streaming`),
-`rtzr`다. `--parallel`은 엔진들을 동시에, `--jobs N`은 엔진마다 세션 N개를 동시에 연다.
+`rtzr`, `gemini`(`gemini-live`)다. 지정하지 않으면 6종 전부다. `--parallel`은 엔진들을 동시에, `--jobs N`은 엔진마다 세션 N개를 동시에 연다.
 전송은 실시간 속도라 `core`는 `--jobs 1`이면 엔진당 약 4시간 걸린다. 동시 세션 한도는
 Muse 8개, 리턴제로 무료 계정 5개다. 동시 세션이 지연 측정에 영향을 주는지는 확인하지 않았다.
 
@@ -179,6 +179,9 @@ Muse 8개, 리턴제로 무료 계정 5개다. 동시 세션이 지연 측정에
 | grok | `XAI_API_KEY` |
 | mai | `AZURE_MAI_ENDPOINT`(`https://<리소스>.services.ai.azure.com`), `AZURE_MAI_API_KEY`, `AZURE_MAI_DEPLOYMENT_NAME` |
 | rtzr | `RTZR_CLIENT_ID`, `RTZR_CLIENT_SECRET` |
+| gemini | `GEMINI_API_KEY` |
+
+mai는 현재 구독에서 배포 불가(2026-10-16)이며 Vercel AI Gateway 경로를 검토 중이다. 어댑터는 그대로 둔다.
 
 `websockets` 패키지가 필요하다(eval 도구 중 이것만 외부 패키지다). FLEURS(float WAV)와
 Zeroth(FLAC)는 `ffmpeg`로 16kHz mono PCM16으로 변환해 보낸다.
@@ -198,17 +201,23 @@ deepgram      2    1,019.9      0.462     0.131       183
 grok          2    1,019.9      0.200     0.057        79
 mai           2    1,019.9      0.540     0.153       214
 rtzr          2    1,019.9      0.714     0.202       283
-합계                                        0.594       831
+gemini        3    1,019.9      0.850     0.241       337
+합계                                        0.835     1,169
+별도 분할: gemini (세션 상한 540초, 세션 3개, 최장 440.9초)
 
 누적 지출 0원 / 한도 20,000원
 ```
 
-`core` 5엔진 합계는 약 $8.31(11,632원)이다(1,400원/달러).
+`core` 6엔진 합계는 약 $11.68(16,348원)이다(1,400원/달러). 기본 누적 한도 20,000원 안에 들지만
+여유가 크지 않다.
 
 ### 비용 계산과 차단
 
 - **단가는 `cost.py`의 `PRICES` 한 곳에만 있다.** 각 값의 출처를 주석으로 달았다. 문서·보도
   값이며 실청구서로 확인한 값이 아니다. 연결당 최소 과금(리턴제로 세션당 10초)은 세션마다 올려 반영한다.
+- **gemini는 토큰 과금이라 시간당 $0.85가 추정이다.** 입력 오디오 $3.50/1M 토큰(초당 32토큰,
+  분당 약 $0.0067)과 출력 텍스트 $21/1M 토큰(한국어 말 1분 약 350토큰, 분당 약 $0.0074)을 더해
+  보수적으로 올렸다. 서버가 `usageMetadata`를 보내면 장부의 `tokens`에 세션별 마지막 값의 합을 남긴다.
 - **한도는 둘이다.** `--budget-krw`는 **이번 실행 한 번**에 쓸 수 있는 금액이고,
   `--total-cap-krw`(기본 20,000원)는 **장부에 쌓인 모든 실행의 누적 지출** 상한이다.
   시작 전 화면에 `누적 지출 X원 / 한도 Y원`을 낸다(dry-run도 같다).
@@ -232,7 +241,17 @@ rtzr          2    1,019.9      0.714     0.202       283
   들어간다. 정답은 묶음 안 클립 정답을 이어 붙인 것이고 채점은 공개 자료 계약과 같은
   표준 CER(구두점 정규화, 삽입 포함, 묶음별 거리 합 / 정답 문자 합)이다.
 - **회의 녹음 분할**: 세션 상한(Muse·MAI 1시간)을 넘지 않도록 3000초를 넘는 녹음은 속기록 줄
-  경계에서 나눈다. 총회 전체는 1963초 지점에서 둘로 나뉜다. 모든 엔진이 같은 분할을 받는다.
+  경계에서 나눈다. 총회 전체는 1963초 지점에서 둘로 나뉜다. 상한이 그보다 짧은 엔진이 없으면
+  모든 엔진이 같은 분할을 받는다.
+- **세션 상한이 짧은 엔진(gemini 540초)**: 기본은 그 엔진만 자기 상한으로 다시 나누고 다른
+  엔진의 분할은 그대로 둔다(실행 결과의 `별도 분할` 줄). core에서 gemini는 29세션(공개 묶음 19,
+  총회 9, 장날 1), 나머지는 20세션이다. 공개 자료는 클립 사이 무음에서만 끊기므로 분할 차이가
+  CER에 영향을 주지 않는다. **총회는 다르다.** 자르는 자리가 많을수록 줄 꼬리 삭제가 늘어
+  gemini만 불리해진다. 그래서 gemini를 다른 엔진과 총회 CER로 견줄 때는 `--common-split`을 쓴다.
+  고른 엔진들의 상한 중 최솟값으로 한 번 나눠 모든 엔진이 같은 단위를 받는다. 대신 다른 엔진의
+  분할도 바뀌므로 그 결과는 같은 분할 방식의 실행끼리만 비교한다. 장부의 `split` 필드
+  (`per-engine`·`common`)가 어느 쪽이었는지 남긴다. 줄 경계로 상한 안에 들지 않으면 조각 수를
+  늘려 다시 나누고, 장날은 줄 정보가 없어 같은 길이로 나눈다.
   줄 경계의 시각은 정렬 추정이라 경계를 넘는 줄 꼬리가 삭제로 잡혀 절대 CER이 약간 높게
   나올 수 있지만, 모든 엔진에 똑같이 적용되므로 엔진 간 비교는 공정하다.
 - **길이 확인**: 세션마다 디코드한 PCM 길이를 계획과 대조하고 10ms 넘게 다르면 그 세션을
@@ -255,7 +274,7 @@ CER, partial 지연 중앙/최대, final 지연 중앙, 전송 초, 채점 포�
 
 ### 실호출 전 남은 불확실성
 
-**muse·deepgram은 `spike/probe.py`에서 실호출로 확인한 순서를 옮겼다. grok·mai·rtzr는 문서만
+**muse·deepgram은 `spike/probe.py`에서 실호출로 확인한 순서를 옮겼다. grok·mai·rtzr·gemini는 문서만
 보고 짰다. 다음 세션의 첫 실호출이 검증 게이트다.** 로컬 가짜 서버 테스트는 메시지 순서만
 보장한다. 첫 실행은 `taste`에 엔진 하나씩, 작은 예산으로 시작하고 세션 JSON의 이벤트를 열어
 아래를 확인한다.
@@ -271,5 +290,12 @@ CER, partial 지연 중앙/최대, final 지연 중앙, 전송 초, 채점 포�
 - **rtzr**: 헤더 형식은 Go/Java 예제의 `Bearer`를 따랐다(Python 예제는 소문자 `bearer`).
   partial에는 `start_at`만 있고 길이가 0이라 **partial 지연을 못 잴 수 있다**(final만 잰다).
   `domain=MEETING`을 골랐다. 세션 최대 길이는 문서에 없다. 60초 무음이면 서버가 끊을 수 있다.
+- **gemini**: 문서(ai.google.dev live-transcribe·api/live, 2026-10-16)와 무과금 모델 조회
+  (`models/gemini-3.5-transcribe-live`, 지원 메서드 `bidiGenerateContent`)만 확인했다. 인증은 문서대로
+  URL 쿼리 `key`이며 URL은 어디에도 기록하지 않고 오류 문구의 키는 `***`로 지운다. 확인할 것:
+  종료 이벤트가 문서에 없어 `audioStreamEnd` 뒤 8초 동안 메시지가 없으면 끝난 것으로 본다(마지막
+  확정 전사를 놓칠 수 있다). `inputTranscription`이 겹치지 않는 조각인지(지금은 공백으로 이어 붙인다).
+  `endOffset`이 세션 시작 기준인지(지연 계산의 전제). `usageMetadata`가 누적 값인지. 실제 연결 상한과
+  `goAway` 시점(이벤트로 기록). 설정 키는 문서의 WebSocket 표기(camelCase `languageCodes`)를 따랐다.
 - **muse·deepgram**: 남아 있는 스파이크 결과는 24kHz 합성 픽스처다. 16kHz(`PCM_16KHZ`, `sample_rate=16000`)
   전송은 코드가 허용하지만 기록된 실호출 결과로는 확인하지 못했다. Deepgram이 연결 시간으로 과금하는지도 미확인이다.

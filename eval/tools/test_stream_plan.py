@@ -113,6 +113,34 @@ class StageTest(unittest.TestCase):
             with self.assertRaises(ValueError):
                 sp.stage_units(root, 'core')
 
+    def test_per_engine_split_leaves_others_unchanged(self):
+        with tempfile.TemporaryDirectory() as tmp:
+            root = make_root(tmp)
+            plan = sp.engine_units(root, 'taste', ['muse', 'gemini', 'deepgram'])
+            self.assertIs(plan['muse'], plan['deepgram'])
+            self.assertEqual([u.id for u in plan['muse']], ['chonghoe-2026/first', 'jangnal-2026/all'])
+            self.assertTrue(all(u.seconds <= 540 for u in plan['gemini']))
+            self.assertEqual([u.id for u in plan['gemini']][:2],
+                             ['chonghoe-2026/first-seg-1', 'chonghoe-2026/first-seg-2'])
+            # 같은 정답 글자가 빠짐없이 나뉘어 들어간다
+            self.assertEqual(' '.join(u.ref for u in plan['gemini'] if u.ref), '하나 둘')
+
+    def test_common_split_uses_minimum_limit(self):
+        with tempfile.TemporaryDirectory() as tmp:
+            root = make_root(tmp)
+            plan = sp.engine_units(root, 'taste', ['muse', 'gemini'], common=True)
+            self.assertIs(plan['muse'], plan['gemini'])
+            self.assertTrue(all(u.seconds <= 540 for u in plan['muse']))
+            only_unlimited = sp.engine_units(root, 'taste', ['deepgram'], common=True)
+            self.assertEqual(len(only_unlimited['deepgram']), 2)
+
+    def test_split_adds_pieces_until_all_fit(self):
+        # 2분할이면 목표 50초에 가장 가까운 경계 30에서 잘려 뒤가 70초로 상한을 넘으므로 3분할로 간다
+        lines = [(0, 'a'), (10, 'b'), (30, 'c'), (70, 'd')]
+        units = sp.meeting_units('m', Path('m.wav'), lines, end=100, max_segment=55)
+        self.assertEqual([(u.pieces[0].start, u.pieces[0].end) for u in units], [(0, 30), (30, 70), (70, 100)])
+        self.assertEqual(' '.join(u.ref for u in units), 'a b c d')
+
     def test_session_limit_check(self):
         unit = sp.Unit('u', 's', [sp.Piece(Path('a'), 0, 4000)])
         with self.assertRaises(ValueError):

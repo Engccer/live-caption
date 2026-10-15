@@ -27,7 +27,8 @@ TASTE_CUTOFF = 600.0
 PCM_TOLERANCE = 0.01      # 디코드 길이와 계획 길이의 허용 차이(초)
 
 # 엔진별 세션 상한(초). None은 문서에 상한이 없거나 확인하지 못한 경우다.
-SESSION_LIMITS = {'muse': 3600, 'mai': 3600, 'deepgram': None, 'grok': None, 'rtzr': None}
+# gemini는 문서상 연결 약 10분이라 여유를 두고 540초로 둔다.
+SESSION_LIMITS = {'muse': 3600, 'mai': 3600, 'deepgram': None, 'grok': None, 'rtzr': None, 'gemini': 540}
 
 
 @dataclass
@@ -131,25 +132,30 @@ def nearest_boundary(starts, target):
     return min(starts, key=lambda s: (abs(s - target), s))
 
 
-def meeting_units(set_name, audio, lines, end=None, max_segment=LONG_SEGMENT_MAX):
+def meeting_units(set_name, audio, lines, end=None, max_segment=LONG_SEGMENT_MAX, label='all'):
     """회의 녹음을 줄 경계에서 나눈다. 각 줄은 시작 시각이 속한 세션의 정답이 된다."""
     end = end or wav_seconds(audio)
-    n = max(1, -(-end // max_segment))
-    n = int(n)
     starts = [s for s, _ in lines if 0 < s < end]
-    cuts = [0.0] + [nearest_boundary(starts, end * k / n) for k in range(1, n)] + [end]
-    if any(b - a > max_segment or b <= a for a, b in zip(cuts, cuts[1:])):
+    # 가장 적은 조각 수부터 늘려 가며, 균등 목표점에 가장 가까운 줄 경계로 잘라 모두 상한 안에 드는 첫 분할을 쓴다
+    for n in range(max(1, int(-(-end // max_segment))), len(starts) + 2):
+        cuts = [0.0] + [nearest_boundary(starts, end * k / n) for k in range(1, n)] + [end]
+        if all(0 < b - a <= max_segment for a, b in zip(cuts, cuts[1:])):
+            break
+    else:
         raise ValueError(f'{set_name}: 줄 경계로 세션 상한 안에서 나눌 수 없습니다')
     units = []
     for k, (a, b) in enumerate(zip(cuts, cuts[1:]), 1):
         ref = ' '.join(t for s, t in lines if a <= s < b)
-        suffix = f'seg-{k}' if n > 1 else 'all'
+        if n == 1:
+            suffix = label
+        else:
+            suffix = f'seg-{k}' if label == 'all' else f'{label}-seg-{k}'
         units.append(Unit(id=f'{set_name}/{suffix}', set=set_name, pieces=[Piece(Path(audio), a, b)],
                           ref=ref or None, scoring='del_sub' if ref else None))
     return units
 
 
-def chonghoe_units(root, cutoff=None):
+def chonghoe_units(root, cutoff=None, max_segment=LONG_SEGMENT_MAX):
     base = Path(root) / 'chonghoe-2026'
     audio = base / 'audio' / 'chonghoe_16k.wav'
     lines = aligned_lines(base / 'ref' / 'aligned.tsv')
@@ -157,28 +163,57 @@ def chonghoe_units(root, cutoff=None):
     if cutoff is not None:
         # 앞 cutoff초 안에서 마지막으로 시작하는 줄 앞에서 자른다. 줄 중간을 자르지 않기 위해서다.
         end = max(s for s, _ in lines if s <= cutoff)
-    units = meeting_units('chonghoe-2026', audio, lines, end=end)
-    if cutoff is not None:
-        for u in units:
-            u.id = u.id.replace('/all', '/first')
-    return units
+    return meeting_units('chonghoe-2026', audio, lines, end=end, max_segment=max_segment,
+                         label='all' if cutoff is None else 'first')
 
 
-def jangnal_units(root):
-    """장날은 축어 정답이 없다(MANIFEST 판정). 지연과 전송만 재고 CER은 내지 않는다."""
+def jangnal_units(root, max_segment=LONG_SEGMENT_MAX):
+    """장날은 축어 정답이 없다(MANIFEST 판정). 지연과 전송만 재고 CER은 내지 않는다.
+
+    줄 경계 정보가 없으므로 상한을 넘으면 같은 길이로 나눈다.
+    """
     audio = Path(root) / 'jangnal-2026' / 'audio' / 'jangnal_1bu_16k.wav'
-    return [Unit(id='jangnal-2026/all', set='jangnal-2026',
-                 pieces=[Piece(audio, 0.0, wav_seconds(audio))])]
+    end = wav_seconds(audio)
+    n = int(-(-end // max_segment))
+    cuts = [end * k / n for k in range(n + 1)]
+    return [Unit(id='jangnal-2026/all' if n == 1 else f'jangnal-2026/seg-{k}', set='jangnal-2026',
+                 pieces=[Piece(audio, a, b)]) for k, (a, b) in enumerate(zip(cuts, cuts[1:]), 1)]
 
 
-def stage_units(root, stage):
+def stage_units(root, stage, session_limit=None):
+    """session_limit이 있으면 묶음·분할 상한을 그 값 이하로 낮춘다."""
+    bundle_max = min(BUNDLE_MAX, session_limit or BUNDLE_MAX)
+    segment_max = min(LONG_SEGMENT_MAX, session_limit or LONG_SEGMENT_MAX)
     if stage == 'taste':
-        return chonghoe_units(root, cutoff=TASTE_CUTOFF) + jangnal_units(root)
+        return (chonghoe_units(root, cutoff=TASTE_CUTOFF, max_segment=segment_max)
+                + jangnal_units(root, segment_max))
     if stage == 'core':
-        return (bundle('fleurs-ko', public_clips(root, 'fleurs-ko'))
-                + bundle('zeroth', public_clips(root, 'zeroth'))
-                + chonghoe_units(root) + jangnal_units(root))
+        return (bundle('fleurs-ko', public_clips(root, 'fleurs-ko'), max_seconds=bundle_max)
+                + bundle('zeroth', public_clips(root, 'zeroth'), max_seconds=bundle_max)
+                + chonghoe_units(root, max_segment=segment_max) + jangnal_units(root, segment_max))
     raise ValueError(f'알 수 없는 단계: {stage}')
+
+
+def engine_units(root, stage, engines, common=False):
+    """엔진별 세션 단위.
+
+    기본: 모든 엔진이 공통 분할(묶음 600초, 회의 3000초)을 받고, 세션 상한이 그보다 짧은
+    엔진만 자기 상한으로 다시 나눈 단위를 받는다. 다른 엔진의 분할은 바뀌지 않는다.
+    common=True: 고른 엔진들의 상한 중 최솟값으로 한 번 나눠 모든 엔진이 같은 단위를 받는다.
+    """
+    limits = [SESSION_LIMITS[e] for e in engines if SESSION_LIMITS[e] is not None]
+    if common:
+        units = stage_units(root, stage, min(limits) if limits else None)
+        return {e: units for e in engines}
+    default = stage_units(root, stage)
+    out = {}
+    for e in engines:
+        limit = SESSION_LIMITS[e]
+        if limit is not None and any(u.seconds > limit for u in default):
+            out[e] = stage_units(root, stage, limit)
+        else:
+            out[e] = default
+    return out
 
 
 def check_session_limits(units, engines):

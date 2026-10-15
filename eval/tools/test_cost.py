@@ -20,6 +20,9 @@ class EstimateTest(unittest.TestCase):
         self.assertEqual(est['billed_seconds'], 20)
         self.assertAlmostEqual(est['krw'], 20 / 3600 * 1000)
 
+    def test_gemini_estimate(self):
+        self.assertAlmostEqual(cost.estimate('gemini', [3600])['usd'], 0.85)
+
     def test_exchange_rate_override(self):
         self.assertAlmostEqual(cost.estimate('grok', [3600], krw_per_usd=1000)['krw'], 200)
 

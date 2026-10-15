@@ -26,8 +26,9 @@ import stream_score
 from public_data import data_root, outside_repo
 
 ALIASES = {'meta-muse': 'muse', 'muse': 'muse', 'deepgram': 'deepgram', 'grok': 'grok', 'xai': 'grok',
-           'mai': 'mai', 'mai-streaming': 'mai', 'rtzr': 'rtzr', 'returnzero': 'rtzr'}
-ALL_ENGINES = ['muse', 'deepgram', 'grok', 'mai', 'rtzr']
+           'mai': 'mai', 'mai-streaming': 'mai', 'rtzr': 'rtzr', 'returnzero': 'rtzr',
+           'gemini': 'gemini', 'gemini-live': 'gemini'}
+ALL_ENGINES = ['muse', 'deepgram', 'grok', 'mai', 'rtzr', 'gemini']
 
 
 def parse_engines(text):
@@ -61,12 +62,16 @@ def runs_root(root):
 
 
 # ------------------------------------------------------------------ 계획표
-def plan_estimates(units, engines, krw_per_usd):
-    seconds = [u.seconds for u in units]
-    return [cost.estimate(e, seconds, krw_per_usd) for e in engines]
+def plan_estimates(plan, krw_per_usd):
+    return [cost.estimate(e, [u.seconds for u in units], krw_per_usd) for e, units in plan.items()]
 
 
-def format_plan(stage, units, estimates):
+def format_plan(stage, plan, estimates):
+    """세트 표는 가장 많은 엔진이 받는 분할로 보이고, 다른 분할을 받는 엔진은 따로 알린다."""
+    groups = {}
+    for e, us in plan.items():
+        groups.setdefault(id(us), [us, []])[1].append(e)
+    units, shared = max(groups.values(), key=lambda g: len(g[1]))
     audio = sum(u.seconds for u in units)
     gaps = sum(u.gap * max(len(u.pieces) - 1, 0) for u in units)
     out = [f'단계 {stage}: 세션 {len(units)}개, 엔진당 전송 {audio:,.1f}초 ({audio / 3600:.3f}h), '
@@ -89,6 +94,11 @@ def format_plan(stage, units, estimates):
         total_usd += est['usd']
         total_krw += est['krw']
     out.append(f'{"합계":<10} {"":>4} {"":>10} {"":>10} {total_usd:>9.3f} {total_krw:>9,.0f}')
+    for us, names in groups.values():
+        if names is not shared:
+            longest = max(u.seconds for u in us)
+            out.append(f'별도 분할: {", ".join(names)} (세션 상한 {stream_plan.SESSION_LIMITS[names[0]]}초, '
+                       f'세션 {len(us)}개, 최장 {longest:,.1f}초)')
     return '\n'.join(out), total_krw
 
 
@@ -188,15 +198,25 @@ def format_summary(summary):
     return '\n'.join(out)
 
 
+def usage_totals(pairs):
+    """엔진이 사용량(토큰)을 알려 줬으면 세션별 마지막 값을 더해 장부에 남긴다."""
+    keys = ('promptTokenCount', 'responseTokenCount', 'totalTokenCount')
+    usages = [r['usage'] for _, r in pairs if r.get('usage')]
+    if not usages:
+        return {}
+    return {'tokens': {k: sum(u.get(k, 0) or 0 for u in usages) for k in keys}}
+
+
 def interrupt_reason(exc):
     if isinstance(exc, (KeyboardInterrupt, asyncio.CancelledError)):
         return 'interrupted'
     return 'exception'
 
 
-async def execute(args, root, units, engines, planned, budget_krw, decode=stream_plan.decode_pcm,
+async def execute(args, root, plan, planned, budget_krw, decode=stream_plan.decode_pcm,
                   engine_kwargs=None):
     """엔진마다 끝나는 즉시 장부에 남긴다. 예외·Ctrl-C에서도 finally가 남은 엔진을 기록한다."""
+    engines = list(plan)
     run_dir = new_run_dir(root, args.stage)
     guard = cost.BudgetGuard(budget_krw, args.krw_per_usd)
     instances = {name: make_engine(name, engine_kwargs) for name in engines}
@@ -212,16 +232,19 @@ async def execute(args, root, units, engines, planned, budget_krw, decode=stream
         spent_usd = billed / 3600 * cost.PRICES[name].usd_per_hour
         cost.append_ledger(runs_root(root), {
             'run': run_dir.name, 'stage': args.stage, 'engine': name, 'status': status,
+            'split': 'common' if getattr(args, 'common_split', False) else 'per-engine',
+            'sessions_planned': len(plan[name]),
             'units': len(pairs), 'sent_seconds': guard.sent.get(name, 0.0), 'billed_seconds': billed,
             'spent_usd': spent_usd, 'spent_krw': spent_usd * args.krw_per_usd,
             'planned_krw': planned.get(name), 'budget_krw': budget_krw,
             'aborted_units': sum(bool(r['aborted']) for _, r in pairs),
-            'error_units': sum(bool(r['error']) for _, r in pairs)})
+            'error_units': sum(bool(r['error']) for _, r in pairs),
+            **usage_totals(pairs)})
         summary[name] = {'status': status, 'spent_usd': spent_usd, 'spent_krw': spent_usd * args.krw_per_usd}
 
     async def go(name):
         try:
-            await run_engine(instances[name], units, guard, run_dir / name, args.jobs, decode, states[name])
+            await run_engine(instances[name], plan[name], guard, run_dir / name, args.jobs, decode, states[name])
         except BaseException as exc:
             record(name, interrupt_reason(exc))
             raise
@@ -249,7 +272,7 @@ async def execute(args, root, units, engines, planned, budget_krw, decode=stream
         sets = stream_score.aggregate(rows)
         for set_name in sets:
             sets[set_name]['errors'] = sum(r['error'] for r in rows if r['set'] == set_name)
-        summary[name].update(sets=sets, coverage=coverage(units, rows))
+        summary[name].update(sets=sets, coverage=coverage(plan[name], rows))
     (run_dir / 'summary.json').write_text(json.dumps(summary, ensure_ascii=False, indent=2,
                                                      default=lambda o: None), encoding='utf-8')
     return run_dir, summary
@@ -269,6 +292,8 @@ def main(argv=None, environ=None):
                     help=f'장부 기준 누적 지출 한도(원, 기본 {cost.TOTAL_CAP_KRW:,.0f})')
     ap.add_argument('--confirm', action='store_true', help='실제 API를 호출한다')
     ap.add_argument('--parallel', action='store_true', help='엔진들을 동시에 돌린다')
+    ap.add_argument('--common-split', action='store_true',
+                    help='고른 엔진들의 세션 상한 최솟값으로 모든 엔진을 같은 단위로 나눈다')
     ap.add_argument('--jobs', type=int, default=1, help='엔진마다 동시에 여는 세션 수(기본 1)')
     ap.add_argument('--krw-per-usd', type=positive_finite, default=cost.KRW_PER_USD)
     ap.add_argument('--root', help='자료 루트. 기본 $LIVE_CAPTION_EVAL_DATA')
@@ -285,14 +310,15 @@ def main(argv=None, environ=None):
         ap.error('--jobs는 1 이상이어야 합니다')
     try:
         engines = parse_engines(args.engines)
-        units = stream_plan.stage_units(root, args.stage)
-        stream_plan.check_session_limits(units, engines)
+        plan = stream_plan.engine_units(root, args.stage, engines, common=args.common_split)
+        for name, units in plan.items():
+            stream_plan.check_session_limits(units, [name])
     except (ValueError, OSError) as exc:
         print(f'오류: {exc}', file=sys.stderr)
         return 2
 
-    estimates = plan_estimates(units, engines, args.krw_per_usd)
-    table, _ = format_plan(args.stage, units, estimates)
+    estimates = plan_estimates(plan, args.krw_per_usd)
+    table, _ = format_plan(args.stage, plan, estimates)
     print(table)
     spent_total = cost.ledger_spent_krw(runs_root(root))
     print(f'\n누적 지출 {spent_total:,.0f}원 / 한도 {args.total_cap_krw:,.0f}원')
@@ -324,7 +350,8 @@ def main(argv=None, environ=None):
     print(f'\n실행: {", ".join(runnable)} / 예상 {total_planned:,.0f}원 / 차단 기준 {effective:,.0f}원'
           f'(이번 예산 {args.budget_krw:,.0f}원, 남은 누적 한도 {args.total_cap_krw - spent_total:,.0f}원)')
     engine_kwargs = {n: {'environ': environ} for n in runnable} if environ is not None else None
-    run_dir, summary = asyncio.run(execute(args, root, units, runnable, planned, effective,
+    plan = {n: plan[n] for n in runnable}
+    run_dir, summary = asyncio.run(execute(args, root, plan, planned, effective,
                                            engine_kwargs=engine_kwargs))
     print(format_summary(summary))
     print(f'\n산출물: {run_dir}')

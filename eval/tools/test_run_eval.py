@@ -102,6 +102,27 @@ class DryRunTest(unittest.TestCase):
         self.assertIn('남은 누적 한도', err)
         self.assertEqual(len(list(self.runs().iterdir())), 1)          # 장부만 있고 실행 폴더 없음
 
+    def test_usage_totals(self):
+        pairs = [(None, {'usage': {'promptTokenCount': 10, 'responseTokenCount': 2, 'totalTokenCount': 12}}),
+                 (None, {}),
+                 (None, {'usage': {'promptTokenCount': 5, 'totalTokenCount': 5}})]
+        self.assertEqual(run_eval.usage_totals(pairs),
+                         {'tokens': {'promptTokenCount': 15, 'responseTokenCount': 2, 'totalTokenCount': 17}})
+        self.assertEqual(run_eval.usage_totals([(None, {})]), {})
+
+    def test_common_split_dry_run(self):
+        code, out, _ = call_main(['--stage', 'taste', '--root', str(self.root), '--engines', 'muse,gemini'],
+                                 environ={})
+        self.assertIn('별도 분할: gemini (세션 상한 540초', out)
+        code, out, _ = call_main(['--stage', 'taste', '--root', str(self.root), '--engines', 'muse,gemini',
+                                  '--common-split'], environ={})
+        self.assertEqual(code, 0)
+        self.assertNotIn('별도 분할', out)
+        rows = [line.split() for line in out.splitlines() if line.startswith(('muse ', 'gemini '))]
+        self.assertEqual(len(rows), 2)
+        self.assertEqual(rows[0][1], rows[1][1])            # 같은 세션 수
+        self.assertEqual(rows[0][1], '3')                   # 총회 590초가 540초 상한으로 둘 + 장날
+
     def test_parse_aliases(self):
         self.assertEqual(run_eval.parse_engines('meta-muse, xai,mai-streaming,muse'), ['muse', 'grok', 'mai'])
 
@@ -129,7 +150,7 @@ class EndToEndTest(unittest.TestCase):
                 async with serve(handler, '127.0.0.1', 0) as server:
                     url = f'ws://127.0.0.1:{server.sockets[0].getsockname()[1]}'
                     kwargs = {'muse': {'environ': {'META_API_KEY': 'k'}, 'url': url, 'pace': 0}}
-                    return await run_eval.execute(args, root, units, ['muse'], {'muse': 1.0}, 1000.0,
+                    return await run_eval.execute(args, root, {'muse': units}, {'muse': 1.0}, 1000.0,
                                                   decode=stream_plan.decode_pcm,
                                                   engine_kwargs=kwargs)
 
@@ -151,6 +172,45 @@ class EndToEndTest(unittest.TestCase):
             self.assertNotIn('하나', (run_dir / 'summary.json').read_text())
             text = run_eval.format_summary(summary)
             self.assertIn('0.00%', text)
+
+
+@unittest.skipIf(serve is None, 'websockets 미설치')
+class GeminiLedgerKeyTest(unittest.TestCase):
+    def test_key_never_written(self):
+        import engines
+        key = 'gemini-ledger-secret-999'
+
+        async def handler(ws):
+            await ws.recv()
+            await ws.send(json.dumps({'setupComplete': {}}))
+            async for msg in ws:
+                if json.loads(msg).get('realtimeInput', {}).get('audioStreamEnd'):
+                    await ws.send(json.dumps({'serverContent': {'inputTranscription': {'text': '하나 둘'}}}))
+                    await ws.send(json.dumps({'usageMetadata': {'totalTokenCount': 9}}))
+
+        idle = engines.Gemini.IDLE_END
+        engines.Gemini.IDLE_END = 0.2
+        try:
+            with tempfile.TemporaryDirectory() as tmp:
+                root = make_root(Path(tmp) / 'eval')
+                plan = stream_plan.engine_units(root, 'taste', ['gemini'])
+                args = argparse.Namespace(stage='taste', krw_per_usd=1400, parallel=False, jobs=1)
+
+                async def go():
+                    async with serve(handler, '127.0.0.1', 0) as server:
+                        url = f'ws://127.0.0.1:{server.sockets[0].getsockname()[1]}'
+                        kwargs = {'gemini': {'environ': {'GEMINI_API_KEY': key}, 'url': url, 'pace': 0}}
+                        return await run_eval.execute(args, root, plan, {'gemini': 1.0}, 1000.0,
+                                                      decode=stream_plan.decode_pcm, engine_kwargs=kwargs)
+
+                run_dir, summary = asyncio.run(go())
+                ledger = (Path(tmp) / 'runs' / 'ledger.jsonl').read_text()
+                self.assertEqual(json.loads(ledger)['tokens']['totalTokenCount'], 9 * len(plan['gemini']))
+                for path in Path(tmp, 'runs').rglob('*'):
+                    if path.is_file():
+                        self.assertNotIn(key, path.read_text(encoding='utf-8'), path.name)
+        finally:
+            engines.Gemini.IDLE_END = idle
 
 
 class FakeEngine:
@@ -194,7 +254,8 @@ class ExecutePathsTest(unittest.TestCase):
         args = argparse.Namespace(stage='taste', budget_krw=1000.0, krw_per_usd=1400, parallel=parallel, jobs=1)
         units = self.units
         decode = decode or (lambda p: b'\x00\x00' * 16000 * 700)
-        return asyncio.run(run_eval.execute(args, self.root, units, list(behaviors), {}, 1000.0, decode=decode))
+        return asyncio.run(run_eval.execute(args, self.root, {n: units for n in behaviors}, {}, 1000.0,
+                                            decode=decode))
 
     def test_exception_records_every_engine_once(self):
         with self.assertRaises(RuntimeError):
