@@ -56,10 +56,12 @@
    상용을 고르는 것은 순서가 틀렸다.
    실행기와 비용 안전장치는 준비됐다(`eval/tools/run_eval.py`, 사용법은 `eval/tools/README.md`).
    6엔진(Gemini 3.5 Transcribe Live 포함) 기준 taste 약 1,170원, core 약 1만 6,300원(dry-run).
-   키는 Muse·Deepgram·Grok·리턴제로·Gemini 다섯이 준비됐다(2026-10-16, 리턴제로는 무료 10시간).
+   키는 Muse·Deepgram·Grok·리턴제로·Gemini·Vercel AI Gateway(MAI 경유, 키 한도 $5) 여섯이
+   준비됐다(2026-10-16, 리턴제로는 무료 10시간). 기본 6엔진 core 약 1만 6,300원.
+   첫 실호출은 `mai-vercel` 단독 taste로 게이트웨이가 세션 중간에 partial·final을 주는지부터 본다.
    Gemini는 세션 540초로 따로 나뉘므로 회의 CER 비교는 `--common-split`으로 돌린다. **MAI는 배포가 막혀 있다.** 새 종량제 구독에서
-   배포 창이 "No available regions"를 낸다(모델 카탈로그의 지역 표와 다르다). 대안은 Vercel AI
-   Gateway의 MAI-Transcribe-2 Streaming 경로이며 어댑터 수정이 필요하다. 첫 실호출은 taste를 엔진 하나씩 작은 예산(예: 300원)으로 돌려
+   배포 창이 "No available regions"를 낸다(모델 카탈로그의 지역 표와 다르다). 그래서 같은 모델을
+   Vercel AI Gateway 경유 `mai-vercel`로 평가한다. 첫 실호출은 taste를 엔진 하나씩 작은 예산(예: 300원)으로 돌려
    이벤트 형식을 확인하는 것부터다(grok·mai·rtzr 어댑터는 문서 기준 구현).
 
 ## 프로젝트 전제 (2026-09-05 확정)
