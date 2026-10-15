@@ -55,8 +55,9 @@
    일이므로 **1~3번(기본 경로가 당사자 손에서 도는가)보다 뒤다.** 기본 경로가 끊기는 채로
    상용을 고르는 것은 순서가 틀렸다.
    실행기와 비용 안전장치는 준비됐다(`eval/tools/run_eval.py`, 사용법은 `eval/tools/README.md`).
-   taste 5엔진 약 830원, core 약 1만 1,600원(dry-run). 키는 Muse·Deepgram·Grok·리턴제로 넷이
-   준비됐다(2026-10-16, 리턴제로는 무료 10시간). **MAI는 배포가 막혀 있다.** 새 종량제 구독에서
+   6엔진(Gemini 3.5 Transcribe Live 포함) 기준 taste 약 1,170원, core 약 1만 6,300원(dry-run).
+   키는 Muse·Deepgram·Grok·리턴제로·Gemini 다섯이 준비됐다(2026-10-16, 리턴제로는 무료 10시간).
+   Gemini는 세션 540초로 따로 나뉘므로 회의 CER 비교는 `--common-split`으로 돌린다. **MAI는 배포가 막혀 있다.** 새 종량제 구독에서
    배포 창이 "No available regions"를 낸다(모델 카탈로그의 지역 표와 다르다). 대안은 Vercel AI
    Gateway의 MAI-Transcribe-2 Streaming 경로이며 어댑터 수정이 필요하다. 첫 실호출은 taste를 엔진 하나씩 작은 예산(예: 300원)으로 돌려
    이벤트 형식을 확인하는 것부터다(grok·mai·rtzr 어댑터는 문서 기준 구현).
