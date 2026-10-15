@@ -197,6 +197,21 @@ SpaceXAI가 2026-09-18에 내놓았다. 문서상 실시간 스트리밍·실시
 브라우저에서 직접 붙일 수 없다(WebSocket 인증이 헤더라 중계 서버가 필요하다). 따라서
 **1차 웹앱에는 해당되지 않고** iOS 경로와 셀프호스팅 경로의 후보다.
 
+### 2026년 9~10월 새 후보 (2026-10-16 조사)
+
+조사 전문은 `docs/research/2026-10-16-transcription-releases-sep-oct.md`.
+
+- **MAI-Transcribe-2-Streaming**(마이크로소프트, 10-01 공개 프리뷰): 한국어 실시간 전사,
+  시간당 $0.54. **실시간 화자 분리도 화자 전환 신호도 없다.** 서버 VAD가 없어 클라이언트가
+  쉼마다 commit을 보내야 한다. 재야 할 것: 한국어 CER, partial 지연(Muse 151ms와 같은 정의로).
+- **VibeVoice-ASR-Streaming**(Microsoft Research, 09-02, MIT 공개 가중치 1.5B·7B): 스트리밍
+  전사와 화자 귀속을 한 모델이 낸다고 논문이 주장한다. 셀프호스팅 경로에서 WhisperLiveKit과
+  비교할 후보. 재야 할 것: 한국어 CER, 화자 수 계수, 1.5B 기기 실시간 여부.
+- **Nemotron-3-Diarization**(NVIDIA, 09-23, 최대 8명): Streaming Sortformer 후속.
+  한국어 학습·평가 기록이 없어 한국어 회의 녹음 DER부터 재야 한다.
+
+셋 다 1차 웹앱 경로(서버 없음, 브라우저 내장 API)는 바꾸지 않는다.
+
 ### 기존 지연 수치의 한계
 
 `llm-model-eval` 측정 규칙 1: **지연은 다른 날 최소 2회 재현해야 판정 근거가 된다.**
